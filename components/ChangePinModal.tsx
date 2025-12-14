@@ -93,6 +93,11 @@ setLoading(false);
           value={byName}
           onChange={(e) => setByName(e.target.value)}
         />
+         {byName.trim() === "" && (
+         <p className="text-xs text-red-600 mb-2">
+         Name is required
+         </p>
+         )}
 
         <input
           type="date"
@@ -105,13 +110,18 @@ setLoading(false);
           <button onClick={onClose} className="border px-4 py-2 w-1/2">
             Cancel
           </button>
-          <button
-            onClick={submit}
-            disabled={loading}
-            className="bg-black text-white px-4 py-2 w-1/2"
-          >
-            {loading ? "Changing…" : "Change"}
-          </button>
+         <button
+  onClick={submit}
+  disabled={loading || byName.trim() === ""}
+  className={`px-4 py-2 w-1/2 ${
+    byName.trim() === ""
+      ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+      : "bg-black text-white"
+  }`}
+>
+  {loading ? "Changing…" : "Change"}
+</button>
+
         </div>
       </div>
     </div>

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { supabase } from "../lib/supabase";
 import { useEffect} from "react";
+import NameDropdown from "./NameDropdown";
 
 export default function ChangePinModal({
   open,
@@ -87,12 +88,7 @@ setLoading(false);
           onChange={(e) => setNewPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
         />
 
-        <input
-          placeholder="Your name"
-          className="w-full border p-2 mb-2"
-          value={byName}
-          onChange={(e) => setByName(e.target.value)}
-        />
+        <NameDropdown value={byName} onChange={setByName} />
          {byName.trim() === "" && (
          <p className="text-xs text-red-600 mb-2">
          Name is required

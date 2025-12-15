@@ -9,7 +9,7 @@ import AddItemModal from '../../../components/AdditemModal';
 import ItemHistoryModal from '../../../components/ItemHistoryModal';
 import ChangePinModal from '../../../components/ChangePinModal';
 import DeleteItemModal from '../../../components/DeleteItemModal';
-import ManageNamesModal from "../../../components/ManageNamesModal";
+//import ManageNamesModal from "../../../components/ManageNamesModal";
 
 type Item = {
   id: string;
@@ -326,11 +326,12 @@ useEffect(() => {
     setItems(res.data ?? []);
   }}
 />
+{/*
 <ManageNamesModal
   open={manageNamesOpen && adminMode}
   onClose={() => setManageNamesOpen(false)}
 />
-
+*/}
     </main>
   );
 }

@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '../../../lib/supabase';
 import UpdateStockModal from '../../../components/UpdateStockModal';
-import AddItemModal from '../../../components/AdditemModal';
+import AdditemModal from '../../../components/AdditemModal';
 import ItemHistoryModal from '../../../components/ItemHistoryModal';
 //import ChangePinModal from '../../../components/ChangePinModal';
 import DeleteItemModal from '../../../components/DeleteItemModal';
@@ -272,7 +272,7 @@ useEffect(() => {
         }}
       />
 
-      <AddItemModal
+      <AdditemModal
         open={addOpen && adminMode}
         subcategoryId={categoryId!}
         onClose={() => setAddOpen(false)}

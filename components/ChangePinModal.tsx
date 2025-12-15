@@ -89,12 +89,6 @@ setLoading(false);
         />
 
         <NameDropdown value={byName} onChange={setByName} />
-         {byName.trim() === "" && (
-         <p className="text-xs text-red-600 mb-2">
-         Name is required
-         </p>
-         )}
-
         <input
           type="date"
           className="w-full border p-2 mb-4"

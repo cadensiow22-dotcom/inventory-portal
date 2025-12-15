@@ -66,7 +66,9 @@ useEffect(() => {
   .from('items')
   .select('id,name,stock_count,search_text')
   .eq('subcategory_id', categoryId)
+  .eq('is_active', true)
   .limit(200);
+
 
 
     if (cat.error) setErr(cat.error.message);

@@ -302,10 +302,11 @@ useEffect(() => {
     if (!categoryId) return;
 
     const res = await supabase
-      .from('items')
-      .select('id,name,stock_count,search_text')
-      .eq('subcategory_id', categoryId)
-      .limit(200);
+   .from('items')
+   .select('id,name,stock_count,search_text')
+   .eq('subcategory_id', categoryId)
+   .eq('is_active', true)
+   .limit(200);
 
     setItems(res.data ?? []);
   }}

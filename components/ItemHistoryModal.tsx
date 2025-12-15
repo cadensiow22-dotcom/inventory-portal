@@ -90,7 +90,7 @@ export default function ItemHistoryModal({
         ) : null}
 
         {!loading && !err && logs.length > 0 ? (
-          <div className="space-y-2">
+           <div className="max-h-[60vh] overflow-y-auto space-y-2 pr-1">
             {logs.map((l) => (
               <div key={l.id} className="rounded-lg border p-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">

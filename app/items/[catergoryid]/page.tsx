@@ -245,10 +245,12 @@ useEffect(() => {
     setErr(null);
 
     const res = await supabase
-      .from('items')
-      .select('id,name,stock_count,search_text')
-      .eq('subcategory_id', categoryId)
-      .limit(200);
+    .from('items')
+    .select('id,name,stock_count,search_text')
+    .eq('subcategory_id', categoryId)
+    .eq('is_active', true)
+    .limit(200);
+
 
     if (res.error) setErr(res.error.message);
     setItems(res.data ?? []);
@@ -271,6 +273,7 @@ useEffect(() => {
       .from('items')
       .select('id,name,stock_count,search_text')
       .eq('subcategory_id', categoryId)
+      .eq('is_active', true)
       .limit(200);
 
     if (res.error) setErr(res.error.message);

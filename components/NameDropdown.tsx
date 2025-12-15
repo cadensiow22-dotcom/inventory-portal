@@ -164,9 +164,7 @@ export default function NameDropdown({
         </div>
       ) : null}
 
-      {value.trim() === "" ? (
-        <p className="text-xs text-red-600 mt-2">Name is required</p>
-      ) : null}
+    
     </div>
   );
 }

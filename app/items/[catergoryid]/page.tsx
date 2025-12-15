@@ -7,7 +7,7 @@ import { supabase } from '../../../lib/supabase';
 import UpdateStockModal from '../../../components/UpdateStockModal';
 import AddItemModal from '../../../components/AdditemModal';
 import ItemHistoryModal from '../../../components/ItemHistoryModal';
-import ChangePinModal from '../../../components/ChangePinModal';
+//import ChangePinModal from '../../../components/ChangePinModal';
 import DeleteItemModal from '../../../components/DeleteItemModal';
 //import ManageNamesModal from "../../../components/ManageNamesModal";
 
@@ -302,10 +302,10 @@ useEffect(() => {
     setHistoryItem(null);
   }}
 />
-<ChangePinModal
+{/*<ChangePinModal
   open={pinModalOpen && adminMode}
   onClose={() => setPinModalOpen(false)}
-/>
+/>*/}
 <DeleteItemModal
   open={deleteOpen && adminMode}
   item={deleteItem}

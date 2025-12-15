@@ -30,6 +30,38 @@ export default function AddItemModal({
   async function submit() {
     setError("");
     setLoading(true);
+    
+    // REQUIRED FIELD CHECKS
+if (!name.trim()) {
+  setError("Item name is required.");
+  setLoading(false);
+  return;
+}
+
+if (!searchText.trim()) {
+  setError("Tags are required.");
+  setLoading(false);
+  return;
+}
+
+if (!byName.trim()) {
+  setError("Your name is required.");
+  setLoading(false);
+  return;
+}
+
+if (!pin.trim()) {
+  setError("PIN is required.");
+  setLoading(false);
+  return;
+}
+
+if (!/^\d{4}$/.test(pin.trim())) {
+  setError("PIN must be exactly 4 digits.");
+  setLoading(false);
+  return;
+}
+
 
     const { error } = await supabase.rpc("add_item_with_pin", {
       p_name: name,
@@ -76,7 +108,7 @@ export default function AddItemModal({
         />
 
         <input
-          placeholder="Search text"
+          placeholder="Tags"
           className="w-full border p-2 mb-2"
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}

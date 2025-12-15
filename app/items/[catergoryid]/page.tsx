@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '../../../lib/supabase';
 import UpdateStockModal from '../../../components/UpdateStockModal';
-import AdditemModal from '../../../components/AdditemModal';
+import AddItemModal from '../../../components/AdditemModal';
 import ItemHistoryModal from '../../../components/ItemHistoryModal';
 import ChangePinModal from '../../../components/ChangePinModal';
 import DeleteItemModal from '../../../components/DeleteItemModal';
@@ -272,29 +272,30 @@ useEffect(() => {
         }}
       />
 
-      <AdditemModal
-        open={addOpen && adminMode}
-        subcategoryId={categoryId!}
-        onClose={() => setAddOpen(false)}
-        onSuccess={async () => {
-          setAddOpen(false);
-          if (!categoryId) return;
+<AddItemModal
+  open={addOpen && adminMode}
+  subcategoryId={categoryId!}
+  onClose={() => setAddOpen(false)}
+  onSuccess={async () => {
+    setAddOpen(false);
+    if (!categoryId) return;
 
-          setLoading(true);
-          setErr(null);
+    setLoading(true);
+    setErr(null);
 
-          const res = await supabase
-            .from("items")
-            .select("id,name,stock_count,search_text")
-            .eq("subcategory_id", categoryId)
-            .eq("is_active", true)
-            .limit(200);
+    const res = await supabase
+      .from("items")
+      .select("id,name,stock_count,search_text")
+      .eq("subcategory_id", categoryId)
+      .eq("is_active", true)
+      .limit(200);
 
-          if (res.error) setErr(res.error.message);
-          setItems(res.data ?? []);
-          setLoading(false);
-        }}
-      />
+    if (res.error) setErr(res.error.message);
+    setItems(res.data ?? []);
+    setLoading(false);
+  }}
+/>
+
 
       <ItemHistoryModal
         open={historyOpen && adminMode}

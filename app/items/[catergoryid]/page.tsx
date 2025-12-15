@@ -99,239 +99,239 @@ useEffect(() => {
   }, [items, tokens]);
 
   return (
-    <main className="min-h-screen bg-gray-100 p-6">
-      <div className="mx-auto max-w-3xl">
-        <div className="mb-4 flex items-center justify-between gap-3">
-  <Link href="/" className="text-blue-600 hover:underline">
-    ← Home
-  </Link>
+  <main className="min-h-screen bg-gray-100 p-6">
+    <div className="mx-auto max-w-3xl">
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <Link href="/" className="text-blue-600 hover:underline">
+          ← Home
+        </Link>
 
-     <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            className={`rounded-lg border px-3 py-1 text-sm ${
+              adminMode ? "bg-black text-white" : "bg-white hover:bg-gray-50"
+            }`}
+            onClick={() => setAdminMode((v) => !v)}
+          >
+            {adminMode ? "Admin mode: ON" : "Admin mode: OFF"}
+          </button>
 
-    <button
-      type="button"
-      className={`rounded-lg border px-3 py-1 text-sm ${
-        adminMode
-          ? 'bg-black text-white'
-          : 'bg-white hover:bg-gray-50'
-      }`}
-      onClick={() => setAdminMode((v) => !v)}
-    >
-      {adminMode ? 'Admin mode: ON' : 'Admin mode: OFF'}
-    </button>
-    {adminMode && (
-  <button
-    type="button"
-    className="rounded-lg border px-3 py-1 text-sm hover:bg-gray-50"
-    onClick={() => setPinModalOpen(true)}
-  >
-    Change PIN
-  </button>
-)}
-{adminMode && (
-  <button
-    type="button"
-    className="rounded-lg border px-3 py-1 text-sm hover:bg-gray-50"
-    onClick={() => setManageNamesOpen(true)}
-  >
-    Manage Names
-  </button>
-)}
+          {adminMode && (
+            <button
+              type="button"
+              className="rounded-lg border px-3 py-1 text-sm hover:bg-gray-50"
+              onClick={() => setPinModalOpen(true)}
+            >
+              Change PIN
+            </button>
+          )}
 
-    <div className="text-xs text-gray-500">
-      ID: <span className="font-mono">{categoryId}</span>
-    </div>
-  </div>
-</div>
+          {adminMode && (
+            <button
+              type="button"
+              className="rounded-lg border px-3 py-1 text-sm hover:bg-gray-50"
+              onClick={() => setManageNamesOpen(true)}
+            >
+              Manage Names
+            </button>
+          )}
 
-
-        <h1 className="text-2xl font-bold mb-4">{title || 'Items'}</h1>
-
-        <div className="rounded-xl bg-white p-4 shadow mb-4">
-          <label className="text-sm font-semibold">Search</label>
-          <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="e.g. philips gu10 warm white"
-            className="mt-2 w-full rounded-lg border border-gray-300 p-3 outline-none focus:ring"
-          />
-          <p className="text-xs text-gray-500 mt-2">
-            Tip: brand + base + color + watts works best.
-          </p>
-        </div>
-        {adminMode && (
-  <button
-    className="mb-4 rounded-lg border px-4 py-2 text-sm hover:bg-gray-50"
-    onClick={() => setAddOpen(true)}
-  >
-    + Add Item
-  </button>
-)}
-
-
-        {loading && <p>Loading...</p>}
-
-        {err && (
-          <div className="rounded-xl bg-white p-4 shadow">
-            <p className="font-semibold text-red-600">Error</p>
-            <p className="text-sm text-gray-700 mt-1">{err}</p>
+          <div className="text-xs text-gray-500">
+            ID: <span className="font-mono">{categoryId}</span>
           </div>
-        )}
+        </div>
+      </div>
 
-        {!loading && !err && (
-          <div className="space-y-3">
-            <p className="text-sm text-gray-600">
-              Showing <b>{filtered.length}</b> item(s)
-            </p>
+      <h1 className="mb-4 text-2xl font-bold">{title || "Items"}</h1>
 
-            {filtered.map((it) => (
-              <div key={it.id} className="rounded-xl bg-white p-4 shadow">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <div className="font-semibold">{it.name}</div>
-                    <div className="text-xs text-gray-500">{it.search_text}</div>
-                  </div>
-                  <div className="text-right">
-  <div className="text-xs text-gray-500">Stock</div>
-  <div className="text-xl font-bold">{it.stock_count}</div>
+      <div className="mb-4 rounded-xl bg-white p-4 shadow">
+        <label className="text-sm font-semibold">Search</label>
+        <input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="e.g. philips gu10 warm white"
+          className="mt-2 w-full rounded-lg border border-gray-300 p-3 outline-none focus:ring"
+        />
+        <p className="mt-2 text-xs text-gray-500">
+          Tip: brand + base + color + watts works best.
+        </p>
+      </div>
 
-{adminMode && (
-  <button
-    className="mt-2 rounded-lg border px-3 py-1 text-sm hover:bg-gray-50"
-    onClick={() => {
-      setSelectedItem({ id: it.id, name: it.name, stock_count: it.stock_count });
-      setModalOpen(true);
-    }}
-  >
-    Update stock
-  </button>
-)}
-{adminMode && (
-  <button
-    className="mt-2 rounded-lg border px-3 py-1 text-sm hover:bg-gray-50"
-    onClick={() => {
-      setHistoryItem({ id: it.id, name: it.name });
-      setHistoryOpen(true);
-    }}
-  >
-    View history
-  </button>
-)}
-{adminMode && (
-  <button
-    className="mt-2 rounded-lg border border-red-300 px-3 py-1 text-sm text-red-600 hover:bg-red-50"
-    onClick={() => {
-      setDeleteItem({ id: it.id, name: it.name });
-      setDeleteOpen(true);
-    }}
-  >
-    Delete item
-  </button>
-)}
+      {adminMode && (
+        <button
+          className="mb-4 rounded-lg border px-4 py-2 text-sm hover:bg-gray-50"
+          onClick={() => setAddOpen(true)}
+        >
+          + Add Item
+        </button>
+      )}
 
-</div>
+      {loading && <p>Loading...</p>}
 
+      {err && (
+        <div className="rounded-xl bg-white p-4 shadow">
+          <p className="font-semibold text-red-600">Error</p>
+          <p className="mt-1 text-sm text-gray-700">{err}</p>
+        </div>
+      )}
+
+      {!loading && !err && (
+        <div className="space-y-3">
+          <p className="text-sm text-gray-600">
+            Showing <b>{filtered.length}</b> item(s)
+          </p>
+
+          {filtered.map((it) => (
+            <div key={it.id} className="rounded-xl bg-white p-4 shadow">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <div className="font-semibold">{it.name}</div>
+                  <div className="text-xs text-gray-500">{it.search_text}</div>
+                </div>
+
+                <div className="text-right">
+                  <div className="text-xs text-gray-500">Stock</div>
+                  <div className="text-xl font-bold">{it.stock_count}</div>
+
+                  {adminMode && (
+                    <button
+                      className="mt-2 rounded-lg border px-3 py-1 text-sm hover:bg-gray-50"
+                      onClick={() => {
+                        setSelectedItem({
+                          id: it.id,
+                          name: it.name,
+                          stock_count: it.stock_count,
+                        });
+                        setModalOpen(true);
+                      }}
+                    >
+                      Update stock
+                    </button>
+                  )}
+
+                  {adminMode && (
+                    <button
+                      className="mt-2 rounded-lg border px-3 py-1 text-sm hover:bg-gray-50"
+                      onClick={() => {
+                        setHistoryItem({ id: it.id, name: it.name });
+                        setHistoryOpen(true);
+                      }}
+                    >
+                      View history
+                    </button>
+                  )}
+
+                  {adminMode && (
+                    <button
+                      className="mt-2 rounded-lg border border-red-300 px-3 py-1 text-sm text-red-600 hover:bg-red-50"
+                      onClick={() => {
+                        setDeleteItem({ id: it.id, name: it.name });
+                        setDeleteOpen(true);
+                      }}
+                    >
+                      Delete item
+                    </button>
+                  )}
                 </div>
               </div>
-            ))}
+            </div>
+          ))}
 
-            {filtered.length === 0 && (
-              <div className="rounded-xl bg-white p-6 shadow text-center text-gray-600">
-                No matches. Try “philips gu10 warm white”.
-              </div>
-            )}
-          </div>
-        )}
-      </div>
+          {filtered.length === 0 && (
+            <div className="rounded-xl bg-white p-6 text-center text-gray-600 shadow">
+              No matches. Try “philips gu10 warm white”.
+            </div>
+          )}
+        </div>
+      )}
+
       <UpdateStockModal
-  open={modalOpen && adminMode}
-  item={selectedItem}
-  onClose={() => {
-  setModalOpen(false);
-  setSelectedItem(null);
-}}
-  onSuccess={async () => {
-    if (!categoryId) return;
+        open={modalOpen && adminMode}
+        item={selectedItem}
+        onClose={() => {
+          setModalOpen(false);
+          setSelectedItem(null);
+        }}
+        onSuccess={async () => {
+          if (!categoryId) return;
 
-    setLoading(true);
-    setErr(null);
+          setLoading(true);
+          setErr(null);
 
-    const res = await supabase
-    .from('items')
-    .select('id,name,stock_count,search_text')
-    .eq('subcategory_id', categoryId)
-    .eq('is_active', true)
-    .limit(200);
+          const res = await supabase
+            .from("items")
+            .select("id,name,stock_count,search_text")
+            .eq("subcategory_id", categoryId)
+            .eq("is_active", true)
+            .limit(200);
 
+          if (res.error) setErr(res.error.message);
+          setItems(res.data ?? []);
+          setLoading(false);
+        }}
+      />
 
-    if (res.error) setErr(res.error.message);
-    setItems(res.data ?? []);
-    setLoading(false);
-  }}
-/>
-<AddItemModal
-  open={addOpen && adminMode}
-  subcategoryId={categoryId!}
-  onClose={() => setAddOpen(false)}
-  onSuccess={async () => {
-    setAddOpen(false);
+      <AddItemModal
+        open={addOpen && adminMode}
+        subcategoryId={categoryId!}
+        onClose={() => setAddOpen(false)}
+        onSuccess={async () => {
+          setAddOpen(false);
+          if (!categoryId) return;
 
-    if (!categoryId) return;
+          setLoading(true);
+          setErr(null);
 
-    setLoading(true);
-    setErr(null);
+          const res = await supabase
+            .from("items")
+            .select("id,name,stock_count,search_text")
+            .eq("subcategory_id", categoryId)
+            .eq("is_active", true)
+            .limit(200);
 
-    const res = await supabase
-      .from('items')
-      .select('id,name,stock_count,search_text')
-      .eq('subcategory_id', categoryId)
-      .eq('is_active', true)
-      .limit(200);
+          if (res.error) setErr(res.error.message);
+          setItems(res.data ?? []);
+          setLoading(false);
+        }}
+      />
 
-    if (res.error) setErr(res.error.message);
-    setItems(res.data ?? []);
-    setLoading(false);
-  }}
-/>
-<ItemHistoryModal
-  open={historyOpen && adminMode}
-  itemId={historyItem?.id ?? null}
-  itemName={historyItem?.name ?? null}
-  onClose={() => {
-    setHistoryOpen(false);
-    setHistoryItem(null);
-  }}
-/>
-{/*<ChangePinModal
-  open={pinModalOpen && adminMode}
-  onClose={() => setPinModalOpen(false)}
-/>*/}
-<DeleteItemModal
-  open={deleteOpen && adminMode}
-  item={deleteItem}
-  onClose={() => {
-    setDeleteOpen(false);
-    setDeleteItem(null);
-  }}
-  onDeleted={async () => {
-    if (!categoryId) return;
+      <ItemHistoryModal
+        open={historyOpen && adminMode}
+        itemId={historyItem?.id ?? null}
+        itemName={historyItem?.name ?? null}
+        onClose={() => {
+          setHistoryOpen(false);
+          setHistoryItem(null);
+        }}
+      />
 
-    const res = await supabase
-   .from('items')
-   .select('id,name,stock_count,search_text')
-   .eq('subcategory_id', categoryId)
-   .eq('is_active', true)
-   .limit(200);
+      <DeleteItemModal
+        open={deleteOpen && adminMode}
+        item={deleteItem}
+        onClose={() => {
+          setDeleteOpen(false);
+          setDeleteItem(null);
+        }}
+        onDeleted={async () => {
+          if (!categoryId) return;
 
-    setItems(res.data ?? []);
-  }}
-/>
+          const res = await supabase
+            .from("items")
+            .select("id,name,stock_count,search_text")
+            .eq("subcategory_id", categoryId)
+            .eq("is_active", true)
+            .limit(200);
 
-<ManageNamesModal
-  open={manageNamesOpen && adminMode}
-  onClose={() => setManageNamesOpen(false)}
-/>
+          setItems(res.data ?? []);
+        }}
+      />
 
-    </main>
-  );
+      <ManageNamesModal
+        open={manageNamesOpen && adminMode}
+        onClose={() => setManageNamesOpen(false)}
+      />
+    </div>
+  </main>
+);
 }

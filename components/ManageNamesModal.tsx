@@ -17,7 +17,6 @@ export default function ManageNamesModal({
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
 
-
   async function loadNames() {
     const { data, error } = await supabase
       .from("staff_names")
@@ -30,15 +29,25 @@ export default function ManageNamesModal({
       setNames([]);
       return;
     }
+
     setNames((data ?? []).map((r: any) => r.name));
   }
 
- useEffect(() => {
-  if (!open) return;
-  loadNames();
- }, [open]);
+  // ✅ Hooks must run every render; do NOT return early before this
+  useEffect(() => {
+    if (!open) return;
 
- if (!open) return null;
+    // reset modal fields when opening
+    setErr("");
+    setPin("");
+    setNewName("");
+    setSelectedToDelete("");
+
+    loadNames();
+  }, [open]);
+
+  // ✅ safe to return after hooks
+  if (!open) return null;
 
   async function addName() {
     setErr("");
@@ -107,7 +116,7 @@ export default function ManageNamesModal({
         {err ? <p className="mt-2 text-sm text-red-600">{err}</p> : null}
 
         <div className="mt-4 rounded-lg border p-3">
-          <div className="text-sm font-semibold mb-2">Add new name</div>
+          <div className="mb-2 text-sm font-semibold">Add new name</div>
           <div className="flex gap-2">
             <input
               value={newName}
@@ -126,7 +135,7 @@ export default function ManageNamesModal({
         </div>
 
         <div className="mt-3 rounded-lg border p-3">
-          <div className="text-sm font-semibold mb-2">Delete name</div>
+          <div className="mb-2 text-sm font-semibold">Delete name</div>
           <div className="flex gap-2">
             <select
               className="w-full rounded-lg border p-2"

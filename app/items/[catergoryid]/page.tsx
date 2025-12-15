@@ -8,6 +8,7 @@ import UpdateStockModal from '../../../components/UpdateStockModal';
 import AddItemModal from '../../../components/AdditemModal';
 import ItemHistoryModal from '../../../components/ItemHistoryModal';
 import ChangePinModal from '../../../components/ChangePinModal';
+import DeleteItemModal from '../../../components/DeleteItemModal';
 
 type Item = {
   id: string;
@@ -32,6 +33,8 @@ export default function ItemsPage() {
   const [historyOpen, setHistoryOpen] = useState(false);
   const [historyItem, setHistoryItem] = useState<{ id: string; name: string } | null>(null);
   const [pinModalOpen, setPinModalOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteItem, setDeleteItem] = useState<{ id: string; name: string } | null>(null);
 
   const tokens = useMemo(() => {
     return q
@@ -202,6 +205,17 @@ useEffect(() => {
     View history
   </button>
 )}
+{adminMode && (
+  <button
+    className="mt-2 rounded-lg border border-red-300 px-3 py-1 text-sm text-red-600 hover:bg-red-50"
+    onClick={() => {
+      setDeleteItem({ id: it.id, name: it.name });
+      setDeleteOpen(true);
+    }}
+  >
+    Delete item
+  </button>
+)}
 
 </div>
 
@@ -276,6 +290,25 @@ useEffect(() => {
 <ChangePinModal
   open={pinModalOpen && adminMode}
   onClose={() => setPinModalOpen(false)}
+/>
+<DeleteItemModal
+  open={deleteOpen && adminMode}
+  item={deleteItem}
+  onClose={() => {
+    setDeleteOpen(false);
+    setDeleteItem(null);
+  }}
+  onDeleted={async () => {
+    if (!categoryId) return;
+
+    const res = await supabase
+      .from('items')
+      .select('id,name,stock_count,search_text')
+      .eq('subcategory_id', categoryId)
+      .limit(200);
+
+    setItems(res.data ?? []);
+  }}
 />
 
     </main>

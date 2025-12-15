@@ -61,17 +61,28 @@ if (!/^\d{4}$/.test(pin.trim())) {
   setLoading(false);
   return;
 }
+if (!stock.trim() || Number.isNaN(Number(stock))) {
+  setError("Initial stock is required.");
+  setLoading(false);
+  return;
+}
+
+if (!byDate) {
+  setError("Date is required.");
+  setLoading(false);
+  return;
+}
 
 
     const { error } = await supabase.rpc("add_item_with_pin", {
-      p_name: name,
+      p_name: name.trim(),
       p_stock_count: Number(stock),
       p_subcategory_id: subcategoryId,
-      p_search_text: searchText,
+      p_search_text: searchText.trim(),
       p_attributes: {},
-      p_changed_by_name: byName,
+      p_changed_by_name: byName.trim(),
       p_changed_by_date: byDate,
-      p_pin: pin,
+      p_pin: pin.trim(),
     });
 
     if (error) {

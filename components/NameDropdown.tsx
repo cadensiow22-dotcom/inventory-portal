@@ -98,7 +98,7 @@ export default function NameDropdown({
   ))}
 </select>
 
-    
+    {err ? <p className="text-xs text-red-600 mt-1">{err}</p> : null}
     </div>
   );
 }

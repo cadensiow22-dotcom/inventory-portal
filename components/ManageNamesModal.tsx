@@ -17,7 +17,6 @@ export default function ManageNamesModal({
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
 
-  if (!open) return null;
 
   async function loadNames() {
     const { data, error } = await supabase
@@ -34,9 +33,12 @@ export default function ManageNamesModal({
     setNames((data ?? []).map((r: any) => r.name));
   }
 
-  useEffect(() => {
-    loadNames();
-  }, [open]);
+ useEffect(() => {
+  if (!open) return;
+  loadNames();
+ }, [open]);
+
+ if (!open) return null;
 
   async function addName() {
     setErr("");

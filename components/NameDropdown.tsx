@@ -82,87 +82,21 @@ export default function NameDropdown({
 
   return (
     <div className="w-full">
-      <label className="block text-sm font-semibold mb-1">Your name</label>
+     <label className="block text-sm font-semibold mb-1">Your name</label>
 
-      <div className="flex gap-2">
-        <select
-          className="w-full border p-2 rounded-md"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          disabled={loading}
-        >
-          <option value="">{loading ? "Loading names..." : "Select your name"}</option>
-          {names.map((n) => (
-            <option key={n} value={n}>
-              {n}
-            </option>
-          ))}
-        </select>
-
-        <button
-          type="button"
-          className="border px-3 rounded-md"
-          onClick={() => setManageOpen((v) => !v)}
-        >
-          Manage
-        </button>
-      </div>
-
-      {err ? <p className="text-xs text-red-600 mt-1">{err}</p> : null}
-
-      {manageOpen ? (
-        <div className="mt-3 rounded-lg border p-3">
-          <label className="block text-sm font-semibold">Admin PIN</label>
-          <input
-            type="password"
-            inputMode="numeric"
-            className="w-full border p-2 mt-1 mb-3 rounded-md"
-            value={pin}
-            onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
-            placeholder="4-digit PIN"
-          />
-
-          <div className="mb-3">
-            <label className="block text-sm font-semibold">Add new name</label>
-            <div className="flex gap-2 mt-1">
-              <input
-                className="w-full border p-2 rounded-md"
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-                placeholder="e.g. Caden"
-              />
-              <button type="button" className="bg-black text-white px-3 rounded-md" onClick={addName}>
-                Add
-              </button>
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold">Delete name</label>
-            <div className="flex gap-2 mt-1">
-              <select
-                className="w-full border p-2 rounded-md"
-                value={selectedToDelete}
-                onChange={(e) => setSelectedToDelete(e.target.value)}
-              >
-                <option value="">Select name</option>
-                {names.map((n) => (
-                  <option key={n} value={n}>
-                    {n}
-                  </option>
-                ))}
-              </select>
-              <button
-                type="button"
-                className="border border-red-300 text-red-600 px-3 rounded-md"
-                onClick={deleteName}
-              >
-                Delete
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
+<select
+  className="w-full border p-2 rounded-md"
+  value={value}
+  onChange={(e) => onChange(e.target.value)}
+  disabled={loading}
+>
+  <option value="">{loading ? "Loading names..." : "Select your name"}</option>
+  {names.map((n) => (
+    <option key={n} value={n}>
+      {n}
+    </option>
+  ))}
+</select>
 
     
     </div>

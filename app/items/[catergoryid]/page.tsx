@@ -66,7 +66,6 @@ useEffect(() => {
     const res = await supabase
       .from('items')
       .select('id,name,stock_count,search_text')
-      .eq('is_active', true)
       .eq('subcategory_id', categoryId)
       .limit(200);
 

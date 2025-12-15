@@ -9,6 +9,7 @@ import AddItemModal from '../../../components/AdditemModal';
 import ItemHistoryModal from '../../../components/ItemHistoryModal';
 import ChangePinModal from '../../../components/ChangePinModal';
 import DeleteItemModal from '../../../components/DeleteItemModal';
+import ManageNamesModal from "../../../components/ManageNamesModal";
 
 type Item = {
   id: string;
@@ -35,6 +36,7 @@ export default function ItemsPage() {
   const [pinModalOpen, setPinModalOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteItem, setDeleteItem] = useState<{ id: string; name: string } | null>(null);
+  const [manageNamesOpen, setManageNamesOpen] = useState(false);
 
   const tokens = useMemo(() => {
     return q
@@ -123,6 +125,15 @@ useEffect(() => {
     onClick={() => setPinModalOpen(true)}
   >
     Change PIN
+  </button>
+)}
+{adminMode && (
+  <button
+    type="button"
+    className="rounded-lg border px-3 py-1 text-sm hover:bg-gray-50"
+    onClick={() => setManageNamesOpen(true)}
+  >
+    Manage Names
   </button>
 )}
 
@@ -313,6 +324,10 @@ useEffect(() => {
 
     setItems(res.data ?? []);
   }}
+/>
+<ManageNamesModal
+  open={manageNamesOpen && adminMode}
+  onClose={() => setManageNamesOpen(false)}
 />
 
     </main>

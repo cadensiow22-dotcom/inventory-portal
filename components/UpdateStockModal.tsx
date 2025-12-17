@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
+import NameDropdown from "./NameDropdown"; 
 
 type ItemRow = {
   id: string;
@@ -127,14 +128,7 @@ export default function UpdateStockModal({ open, onClose, item, onSuccess }: Pro
           </div>
 
           <div>
-            <label className="block text-sm font-medium">Your name</label>
-            <input
-              type="text"
-              className="mt-1 w-full rounded-lg border px-3 py-2"
-              value={changedByName}
-              onChange={(e) => setChangedByName(e.target.value)}
-              placeholder="e.g. Caden"
-            />
+           <NameDropdown value={changedByName} onChange={setChangedByName} />
           </div>
 
           <div>
@@ -176,7 +170,8 @@ export default function UpdateStockModal({ open, onClose, item, onSuccess }: Pro
           <button
             className="w-1/2 rounded-lg border px-3 py-2"
             onClick={onClose}
-            disabled={loading}
+            disabled={loading || changedByName.trim() === ""}
+
           >
             Cancel
           </button>

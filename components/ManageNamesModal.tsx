@@ -55,7 +55,7 @@ export default function ManageNamesModal({
     const p = ownerPin.trim();
     if (!p) return setErr("Owner PIN is required.");
 
-  const { error } = await supabase.rpc("add_staff_name_with_pin", {
+  const { error } = await supabase.rpc("add_staff_name_with_owner_pin", {
      p_name: n,
      p_owner_pin: p,
    });
@@ -74,7 +74,7 @@ export default function ManageNamesModal({
     const p = ownerPin.trim();
 if (!p) return setErr("Owner PIN is required.");
 
-const { error } = await supabase.rpc("delete_staff_name_with_pin", {
+const { error } = await supabase.rpc("delete_staff_name_with_owner_pin", {
   p_name: n,
   p_owner_pin: p,
 });

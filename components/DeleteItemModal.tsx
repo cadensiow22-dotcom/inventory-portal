@@ -84,7 +84,6 @@ export default function DeleteItemModal({
         />
          <NameDropdown value={byName} onChange={setByName} />
 
-
          <label className="mt-3 block text-sm font-semibold">Date</label>
          <input
           type="date"

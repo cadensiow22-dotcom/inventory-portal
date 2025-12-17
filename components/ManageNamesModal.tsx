@@ -11,7 +11,7 @@ export default function ManageNamesModal({
   onClose: () => void;
 }) {
   const [names, setNames] = useState<string[]>([]);
-  const [pin, setPin] = useState("");
+  const [ownerPin, setOwnerPin] = useState("");
   const [newName, setNewName] = useState("");
   const [selectedToDelete, setSelectedToDelete] = useState("");
   const [loading, setLoading] = useState(false);
@@ -39,7 +39,7 @@ export default function ManageNamesModal({
 
     // reset modal fields when opening
     setErr("");
-    setPin("");
+    setOwnerPin("");
     setNewName("");
     setSelectedToDelete("");
 
@@ -52,16 +52,14 @@ export default function ManageNamesModal({
   async function addName() {
     setErr("");
     const n = newName.trim();
-    const p = pin.trim();
+    const p = ownerPin.trim();
+    if (!p) return setErr("Owner PIN is required.");
 
-    if (!/^\d{4}$/.test(p)) return setErr("PIN must be 4 digits.");
-    if (!n) return setErr("Enter a name.");
+  const { error } = await supabase.rpc("add_staff_name_with_pin", {
+     p_name: n,
+     p_owner_pin: p,
+   });
 
-    setLoading(true);
-    const { error } = await supabase.rpc("add_staff_name_with_pin", {
-      p_name: n,
-      p_pin: p,
-    });
     setLoading(false);
 
     if (error) return setErr(error.message);
@@ -73,16 +71,14 @@ export default function ManageNamesModal({
   async function deleteName() {
     setErr("");
     const n = selectedToDelete.trim();
-    const p = pin.trim();
+    const p = ownerPin.trim();
+if (!p) return setErr("Owner PIN is required.");
 
-    if (!/^\d{4}$/.test(p)) return setErr("PIN must be 4 digits.");
-    if (!n) return setErr("Select a name to delete.");
+const { error } = await supabase.rpc("delete_staff_name_with_pin", {
+  p_name: n,
+  p_owner_pin: p,
+});
 
-    setLoading(true);
-    const { error } = await supabase.rpc("delete_staff_name_with_pin", {
-      p_name: n,
-      p_pin: p,
-    });
     setLoading(false);
 
     if (error) return setErr(error.message);
@@ -103,15 +99,20 @@ export default function ManageNamesModal({
           </button>
         </div>
 
-        <label className="block text-sm font-semibold">Admin PIN</label>
+        <label className="block text-sm font-semibold">Owner PIN (full-timers only)</label>
         <input
           type="password"
           inputMode="numeric"
-          value={pin}
-          onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
-          className="mt-1 w-full rounded-lg border p-2"
-          placeholder="4-digit PIN"
-        />
+          value={ownerPin}
+          onChange={(e) =>
+        setOwnerPin(e.target.value.replace(/\D/g, "").slice(0, 8))
+       }
+
+  className="mt-1 w-full rounded-lg border p-2"
+  placeholder="Owner PIN"
+  autoComplete="off"
+/>
+
 
         {err ? <p className="mt-2 text-sm text-red-600">{err}</p> : null}
 

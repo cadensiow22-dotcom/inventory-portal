@@ -4,6 +4,7 @@ import ChangePinModal from "../components/ChangePinModal";
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { supabase } from '../lib/supabase';
+import ManageNamesModal from "../components/ManageNamesModal";
 
 type Category = {
   id: string;
@@ -15,6 +16,7 @@ export default function Page() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [openChangePin, setOpenChangePin] = useState(false);
+  const [openManageNames, setOpenManageNames] = useState(false);
 
   useEffect(() => {
     const run = async () => {
@@ -66,20 +68,32 @@ export default function Page() {
       ))}
     </div>
 
-    {/* Change PIN (Owner-only) */}
-    <div className="mt-6 flex justify-center">
-      <button
-        className="border px-4 py-2 rounded bg-white shadow hover:shadow-md transition"
-        onClick={() => setOpenChangePin(true)}
-      >
-        Change Session PIN
-      </button>
-    </div>
+<div className="mt-6 flex flex-col items-center gap-3">
+  <button
+    className="border px-4 py-2 rounded bg-white shadow hover:shadow-md transition"
+    onClick={() => setOpenChangePin(true)}
+  >
+    Change Session PIN
+  </button>
 
-    <ChangePinModal
-      open={openChangePin}
-      onClose={() => setOpenChangePin(false)}
-    />
+  <button
+    className="border px-4 py-2 rounded bg-white shadow hover:shadow-md transition"
+    onClick={() => setOpenManageNames(true)}
+  >
+    Manage Names (Owner Only)
+  </button>
+</div>
+
+<ChangePinModal
+  open={openChangePin}
+  onClose={() => setOpenChangePin(false)}
+/>
+
+<ManageNamesModal
+  open={openManageNames}
+  onClose={() => setOpenManageNames(false)}
+/>
+
   </>
 )}
 

@@ -8,7 +8,6 @@ import UpdateStockModal from '../../../components/UpdateStockModal';
 import AddItemModal from '../../../components/AdditemModal';
 import ItemHistoryModal from '../../../components/ItemHistoryModal';
 import DeleteItemModal from '../../../components/DeleteItemModal';
-import ManageNamesModal from "../../../components/ManageNamesModal";
 
 type Item = {
   id: string;
@@ -34,7 +33,6 @@ export default function ItemsPage() {
   const [historyItem, setHistoryItem] = useState<{ id: string; name: string } | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteItem, setDeleteItem] = useState<{ id: string; name: string } | null>(null);
-  const [manageNamesOpen, setManageNamesOpen] = useState(false);
 
   const tokens = useMemo(() => {
     return q
@@ -118,16 +116,6 @@ useEffect(() => {
             {adminMode ? "Admin mode: ON" : "Admin mode: OFF"}
           </button>
 
-          
-            {adminMode && (
-            <button
-              type="button"
-              className="rounded-lg border px-3 py-1 text-sm hover:bg-gray-50"
-              onClick={() => setManageNamesOpen(true)}
-            >
-              Manage Names
-            </button>
-          )}
 
           <div className="text-xs text-gray-500">
             ID: <span className="font-mono">{categoryId}</span>
@@ -320,10 +308,6 @@ useEffect(() => {
         }}
       />
 
-      <ManageNamesModal
-        open={manageNamesOpen && adminMode}
-        onClose={() => setManageNamesOpen(false)}
-      />
 
 
     </div>

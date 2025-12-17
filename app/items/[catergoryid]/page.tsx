@@ -7,7 +7,6 @@ import { supabase } from '../../../lib/supabase';
 import UpdateStockModal from '../../../components/UpdateStockModal';
 import AddItemModal from '../../../components/AdditemModal';
 import ItemHistoryModal from '../../../components/ItemHistoryModal';
-import ChangePinModal from '../../../components/ChangePinModal';
 import DeleteItemModal from '../../../components/DeleteItemModal';
 import ManageNamesModal from "../../../components/ManageNamesModal";
 
@@ -33,7 +32,6 @@ export default function ItemsPage() {
   const [addOpen, setAddOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [historyItem, setHistoryItem] = useState<{ id: string; name: string } | null>(null);
-  const [pinModalOpen, setPinModalOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteItem, setDeleteItem] = useState<{ id: string; name: string } | null>(null);
   const [manageNamesOpen, setManageNamesOpen] = useState(false);
@@ -120,17 +118,8 @@ useEffect(() => {
             {adminMode ? "Admin mode: ON" : "Admin mode: OFF"}
           </button>
 
-          {adminMode && (
-            <button
-              type="button"
-              className="rounded-lg border px-3 py-1 text-sm hover:bg-gray-50"
-              onClick={() => setPinModalOpen(true)}
-            >
-              Change PIN
-            </button>
-          )}
-
-          {adminMode && (
+          
+            {adminMode && (
             <button
               type="button"
               className="rounded-lg border px-3 py-1 text-sm hover:bg-gray-50"
@@ -334,11 +323,6 @@ useEffect(() => {
       <ManageNamesModal
         open={manageNamesOpen && adminMode}
         onClose={() => setManageNamesOpen(false)}
-      />
-
-       <ChangePinModal
-        open={pinModalOpen && adminMode}
-        onClose={() => setPinModalOpen(false)}
       />
 
 

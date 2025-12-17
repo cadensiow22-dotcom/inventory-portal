@@ -18,6 +18,7 @@ export default function ChangePinModal({
   const [byDate, setByDate] = useState(new Date().toISOString().slice(0, 10));
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
+  const [ownerPin, setOwnerPin] = useState("");
 
 useEffect(() => {
   if (!open) return;
@@ -28,44 +29,44 @@ useEffect(() => {
   setByName("");
   setByDate(new Date().toISOString().slice(0, 10));
   setErr("");
+  setOwnerPin("");
+
 }, [open]);
 
   if (!open) return null;
 
-  async function submit() {
-    setErr("");
-    setLoading(true);
+async function submit() {
+  setErr("");
+  setLoading(true);
 
-    const { error } = await supabase.rpc("change_admin_pin", {
-      p_current_pin: currentPin,
-      p_new_pin: newPin,
-      p_changed_by_name: byName,
-      p_changed_by_date: byDate,
-    });
+  const { error } = await supabase.rpc("change_admin_pin", {
+    p_current_pin: currentPin,
+    p_new_pin: newPin,
+    p_owner_pin: ownerPin,
+    p_changed_by_name: byName,
+    p_changed_by_date: byDate,
+  });
 
-    if (error) {
-      setErr(error.message);
-      setLoading(false);
-      return;
-    }
-
-    alert("PIN changed successfully");
-    onClose();
+  if (error) {
+    setErr(error.message);
     setLoading(false);
-
-    alert("PIN changed successfully");
-
-// clear fields
-setCurrentPin("");
-setNewPin("");
-setByName("");
-setByDate(new Date().toISOString().slice(0, 10));
-setErr("");
-
-onClose();
-setLoading(false);
-
+    return;
   }
+
+  alert("PIN changed successfully");
+
+  // clear fields
+  setCurrentPin("");
+  setNewPin("");
+  setOwnerPin("");
+  setByName("");
+  setByDate(new Date().toISOString().slice(0, 10));
+  setErr("");
+
+  setLoading(false);
+  onClose();
+}
+
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
@@ -73,6 +74,12 @@ setLoading(false);
         <h2 className="text-lg font-bold mb-3">Change Admin PIN</h2>
 
         {err && <p className="text-red-600 text-sm mb-2">{err}</p>}
+        <input
+          placeholder="Owner PIN (full-timers only)"
+          className="w-full border p-2 mb-2"
+          value={ownerPin}
+          onChange={(e) => setOwnerPin(e.target.value.replace(/\D/g, "").slice(0, 8))}
+/>
 
         <input
           placeholder="Current 4-digit PIN"
@@ -102,7 +109,7 @@ setLoading(false);
           </button>
          <button
   onClick={submit}
-  disabled={loading || byName.trim() === ""}
+    disabled={loading || byName.trim() === "" || ownerPin.trim() === "" || currentPin.length !== 4 || newPin.length !== 4}
   className={`px-4 py-2 w-1/2 ${
     byName.trim() === ""
       ? "bg-gray-300 text-gray-500 cursor-not-allowed"

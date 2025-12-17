@@ -1,5 +1,6 @@
 'use client';
 
+import ChangePinModal from "../components/ChangePinModal";
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { supabase } from '../lib/supabase';
@@ -13,6 +14,7 @@ export default function Page() {
   const [cats, setCats] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
+  const [openChangePin, setOpenChangePin] = useState(false);
 
   useEffect(() => {
     const run = async () => {
@@ -51,19 +53,38 @@ export default function Page() {
         )}
 
         {!loading && !err && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {cats.map((c) => (
-              <Link
-                key={c.id}
-                href={`/category/${c.id}`}
-                className="rounded-xl bg-white p-6 shadow hover:shadow-lg transition block"
-              >
-                <h2 className="text-xl font-semibold text-center">{c.name}</h2>
-              </Link>
-            ))}
-          </div>
-        )}
+  <>
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      {cats.map((c) => (
+        <Link
+          key={c.id}
+          href={`/category/${c.id}`}
+          className="rounded-xl bg-white p-6 shadow hover:shadow-lg transition block"
+        >
+          <h2 className="text-xl font-semibold text-center">{c.name}</h2>
+        </Link>
+      ))}
+    </div>
+
+    {/* Change PIN (Owner-only) */}
+    <div className="mt-6 flex justify-center">
+      <button
+        className="border px-4 py-2 rounded bg-white shadow hover:shadow-md transition"
+        onClick={() => setOpenChangePin(true)}
+      >
+        Change Session PIN
+      </button>
+    </div>
+
+    <ChangePinModal
+      open={openChangePin}
+      onClose={() => setOpenChangePin(false)}
+    />
+  </>
+)}
+
       </div>
     </main>
   );
 }
+

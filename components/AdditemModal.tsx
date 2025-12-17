@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { supabase } from "../lib/supabase";
+import NameDropdown from './NameDropdown';
 
 export default function AddItemModal({
   open,
@@ -125,12 +126,7 @@ if (!byDate) {
           onChange={(e) => setSearchText(e.target.value)}
         />
 
-        <input
-          placeholder="Your name"
-          className="w-full border p-2 mb-2"
-          value={byName}
-          onChange={(e) => setByName(e.target.value)}
-        />
+       <NameDropdown value={byName} onChange={setByName} />
 
         <input
           type="date"
@@ -151,12 +147,16 @@ if (!byDate) {
             Cancel
           </button>
           <button
-            onClick={submit}
-            disabled={loading}
-            className="bg-black text-white px-4 py-2 w-1/2"
-          >
-            {loading ? "Adding…" : "Add"}
-          </button>
+  onClick={submit}
+  disabled={loading || byName.trim() === ""}
+  className={`px-4 py-2 w-1/2 ${
+    byName.trim() === ""
+      ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+      : "bg-black text-white"
+  }`}
+>
+  {loading ? "Adding…" : "Add"}
+</button>
         </div>
       </div>
     </div>

@@ -82,7 +82,7 @@ export default function DeleteItemModal({
           onChange={(e) => setConfirmText(e.target.value)}
           className="mt-1 w-full rounded-lg border p-2"
         />
-         <label className="mt-3 block text-sm font-semibold">Your name</label>
+         <NameDropdown value={byName} onChange={setByName} label="Your name" />
           <NameDropdown value={byName} onChange={setByName} />
 
          <label className="mt-3 block text-sm font-semibold">Date</label>

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
+import NameDropdown from './NameDropdown';
 
 export default function DeleteItemModal({
   open,
@@ -18,6 +19,8 @@ export default function DeleteItemModal({
   const [confirmText, setConfirmText] = useState('');
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState('');
+  const [byName, setByName] = useState('');
+  const [byDate, setByDate] = useState(new Date().toISOString().slice(0, 10));
 
   if (!open || !item) return null;
 
@@ -25,15 +28,23 @@ export default function DeleteItemModal({
     if (confirmText !== 'DELETE') {
       setErr('Type DELETE to confirm.');
       return;
-    }
+     }
+
+    if (!byName.trim()) {
+       setErr('Your name is required.');
+       return;
+     }
 
     setLoading(true);
     setErr('');
 
     const { error } = await supabase.rpc('delete_item_with_pin', {
-      p_item_id: item.id,
-      p_pin: pin,
-    });
+  p_item_id: item.id,
+  p_pin: pin.trim(),
+  p_changed_by_name: byName.trim(),
+  p_changed_by_date: byDate,
+});
+
 
     if (error) {
       setErr(error.message);
@@ -71,6 +82,16 @@ export default function DeleteItemModal({
           onChange={(e) => setConfirmText(e.target.value)}
           className="mt-1 w-full rounded-lg border p-2"
         />
+         <label className="mt-3 block text-sm font-semibold">Your name</label>
+          <NameDropdown value={byName} onChange={setByName} />
+
+         <label className="mt-3 block text-sm font-semibold">Date</label>
+         <input
+          type="date"
+          value={byDate}
+          onChange={(e) => setByDate(e.target.value)}
+          className="mt-1 w-full rounded-lg border p-2"
+            />
 
         <label className="mt-3 block text-sm font-semibold">Admin PIN</label>
         <input

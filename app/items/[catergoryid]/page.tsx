@@ -44,10 +44,18 @@ export default function ItemsPage() {
   const [barcodeLoading, setBarcodeLoading] = useState(false);
   const [barcodeNotFound, setBarcodeNotFound] = useState(false);
   
-  const isMobile = useMemo(() => {
-    if (typeof window === "undefined") return false;
-    return window.matchMedia?.("(max-width: 768px)")?.matches ?? false;
-  }, []);
+  const [isMobile, setIsMobile] = useState(false);
+
+useEffect(() => {
+  const mq = window.matchMedia("(max-width: 768px)");
+  const update = () => setIsMobile(mq.matches);
+
+  update(); // run once on mount
+  mq.addEventListener?.("change", update);
+
+  return () => mq.removeEventListener?.("change", update);
+}, []);
+
 
   const handleBarcodeLookup = async (codeRaw: string) => {
     const code = (codeRaw || "").trim();
@@ -106,16 +114,6 @@ export default function ItemsPage() {
       setBarcodeLoading(false);
     }
   };
-{isMobile && (
-  <button
-    type="button"
-    className="rounded-lg border px-3 py-2 text-sm hover:bg-gray-50 disabled:opacity-50"
-    onClick={() => setScanOpen(true)}
-    disabled={barcodeLoading}
-  >
-    Scan
-  </button>
-)}
 
   const tokens = useMemo(() => {
     return q
@@ -189,16 +187,6 @@ useEffect(() => {
         </Link>
 
         <div className="flex flex-wrap items-center gap-3">
-          <button
-  type="button"
-  className="rounded-lg border px-3 py-1 text-xs hover:bg-white"
-  onClick={() => setLinkOpen(true)}
->
-  Link to existing item
-</button>
-
-
-
           <div className="text-xs text-gray-500">
             ID: <span className="font-mono">{categoryId}</span>
           </div>
@@ -235,6 +223,18 @@ useEffect(() => {
             >
               {barcodeLoading ? "Checking..." : "Check"}
             </button>
+
+            {isMobile && (
+  <button
+    type="button"
+    className="rounded-lg border px-3 py-2 text-sm hover:bg-gray-50 disabled:opacity-50"
+    onClick={() => setScanOpen(true)}
+    disabled={barcodeLoading}
+  >
+    Scan
+  </button>
+)}
+
           </div>
 
           {barcodeErr && (

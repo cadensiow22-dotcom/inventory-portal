@@ -41,6 +41,7 @@ export default function ItemsPage() {
   const [openedFromBarcode, setOpenedFromBarcode] = useState(false);
   const normalizeBarcode = (s: string) =>
   (s || "").replace(/\s+/g, "").trim();
+  const [addPrefillBarcode, setAddPrefillBarcode] = useState("");
 
   // --- Barcode/QR (additive) ---
   const [barcode, setBarcode] = useState("");
@@ -257,7 +258,11 @@ useEffect(() => {
                   <button
                     type="button"
                     className="rounded-lg border px-3 py-1 text-xs hover:bg-white"
-                    onClick={() => setAddOpen(true)}
+                    onClick={() => {
+                     setAddPrefillBarcode(barcode);   // ✅ barcode flow = prefill scanned barcode
+                     setAddOpen(true);
+                    }}
+
                   >
                     + Add new item
                   </button>
@@ -288,11 +293,14 @@ useEffect(() => {
 
       {adminMode && (
         <button
-          className="mb-4 rounded-lg border px-4 py-2 text-sm hover:bg-gray-50"
-          onClick={() => setAddOpen(true)}
-        >
-          + Add Item
-        </button>
+  className="mb-4 rounded-lg border px-4 py-2 text-sm hover:bg-gray-50"
+  onClick={() => {
+    setAddPrefillBarcode("");      // ✅ IMPORTANT: normal add = no barcode
+    setAddOpen(true);
+  }}
+>
+  + Add Item
+</button>
       )}
 
       {loading && <p>Loading...</p>}
@@ -420,7 +428,7 @@ useEffect(() => {
 <AddItemModal
   open={addOpen && adminMode}
   subcategoryId={categoryId!}
-  prefillBarcode={barcode} 
+  prefillBarcode={addPrefillBarcode}
   onClose={() => setAddOpen(false)}
   onSuccess={async () => {
   setAddOpen(false);

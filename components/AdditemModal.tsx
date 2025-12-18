@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "../lib/supabase";
 import NameDropdown from "./NameDropdown";
 
@@ -26,14 +26,25 @@ export default function AddItemModal({
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [barcodeText, setBarcodeText] = useState(prefillBarcode ?? "");
+  const openedWithPrefill = useRef(false);
 
   useEffect(() => {
-    if (open) {
-      setBarcodeText(prefillBarcode ?? "");
-      setError("");
-      setLoading(false);
-    }
-  }, [open, prefillBarcode]);
+  if (!open) return;
+
+  const pre = (prefillBarcode ?? "").trim();
+
+  // ✅ This decides which mode this modal is in for THIS open:
+  // - If it opened because of "barcode not found", prefillBarcode will be present.
+  // - If it opened from normal "+ Add Item", prefillBarcode should be empty.
+  openedWithPrefill.current = pre.length > 0;
+
+  // ✅ Always reset barcode field based on how it opened
+  setBarcodeText(pre);
+
+  setError("");
+  setLoading(false);
+}, [open, prefillBarcode]);
+
 
   if (!open) return null;
 
@@ -75,8 +86,13 @@ export default function AddItemModal({
 
     const bc = (barcodeText || "").trim();
 
-    // ✅ If barcode exists, use the "add + link" RPC instead
-    const rpcName = bc ? "add_item_and_link_barcode_with_pin" : "add_item_with_pin";
+// ✅ Only use barcode RPC if this modal was opened from barcode-not-found flow
+const useBarcodeFlow = openedWithPrefill.current && bc.length > 0;
+
+const rpcName = useBarcodeFlow
+  ? "add_item_and_link_barcode_with_pin"
+  : "add_item_with_pin";
+
 
     const payload: any = {
       p_name: name.trim(),
@@ -89,7 +105,7 @@ export default function AddItemModal({
       p_pin: pin.trim(),
     };
 
-    if (bc) payload.p_barcode_text = bc;
+    if (useBarcodeFlow) payload.p_barcode_text = bc;
 
     const { error } = await supabase.rpc(rpcName, payload);
 

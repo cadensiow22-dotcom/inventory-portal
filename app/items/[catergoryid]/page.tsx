@@ -70,7 +70,7 @@ useEffect(() => {
       // RPC to be implemented later:
       // lookup_item_by_barcode(barcode_text text) -> returns { item_id } or full item
       const { data, error } = await supabase.rpc("lookup_item_by_barcode", {
-        barcode_text: code,
+        p_barcode_text: code,
       });
 
       if (error) throw error;
@@ -186,11 +186,22 @@ useEffect(() => {
           ← Home
         </Link>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="text-xs text-gray-500">
-            ID: <span className="font-mono">{categoryId}</span>
-          </div>
-        </div>
+       <div className="flex flex-wrap items-center gap-3">
+  <button
+    type="button"
+    className={`rounded-lg border px-3 py-1 text-sm ${
+      adminMode ? "bg-black text-white" : "bg-white hover:bg-gray-50"
+    }`}
+    onClick={() => setAdminMode((v) => !v)}
+  >
+    {adminMode ? "Admin mode: ON" : "Admin mode: OFF"}
+  </button>
+
+  <div className="text-xs text-gray-500">
+    ID: <span className="font-mono">{categoryId}</span>
+  </div>
+</div>
+
       </div>
 
       <h1 className="mb-4 text-2xl font-bold">{title || "Items"}</h1>

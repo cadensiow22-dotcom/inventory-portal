@@ -9,6 +9,7 @@ import AddItemModal from '../../../components/AdditemModal';
 import ItemHistoryModal from '../../../components/ItemHistoryModal';
 import DeleteItemModal from '../../../components/DeleteItemModal';
 import LinkBarcodeModal from '../../../components/LinkBarcodeModal';
+import MobileBarcodeScanner from '../../../components/MobileBarcodeScanner';
 
 type Item = {
   id: string;
@@ -35,6 +36,8 @@ export default function ItemsPage() {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteItem, setDeleteItem] = useState<{ id: string; name: string } | null>(null);
   const [linkOpen, setLinkOpen] = useState(false);
+  const [scanOpen, setScanOpen] = useState(false);
+
   // --- Barcode/QR (additive) ---
   const [barcode, setBarcode] = useState("");
   const [barcodeErr, setBarcodeErr] = useState<string | null>(null);
@@ -103,6 +106,16 @@ export default function ItemsPage() {
       setBarcodeLoading(false);
     }
   };
+{isMobile && (
+  <button
+    type="button"
+    className="rounded-lg border px-3 py-2 text-sm hover:bg-gray-50 disabled:opacity-50"
+    onClick={() => setScanOpen(true)}
+    disabled={barcodeLoading}
+  >
+    Scan
+  </button>
+)}
 
   const tokens = useMemo(() => {
     return q
@@ -402,6 +415,14 @@ useEffect(() => {
     if (res.error) setErr(res.error.message);
     setItems(res.data ?? []);
     setLoading(false);
+  }}
+/>
+<MobileBarcodeScanner
+  open={scanOpen}
+  onClose={() => setScanOpen(false)}
+  onDetected={(code) => {
+    setBarcode(code);
+    handleBarcodeLookup(code);
   }}
 />
 

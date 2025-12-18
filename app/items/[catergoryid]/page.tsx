@@ -420,7 +420,7 @@ useEffect(() => {
 <AddItemModal
   open={addOpen && adminMode}
   subcategoryId={categoryId!}
-  prefillBarcode={barcodeNotFound ? barcode : ""}   // ✅ pass scanned barcode
+  prefillBarcode={barcode} 
   onClose={() => setAddOpen(false)}
   onSuccess={async () => {
     setAddOpen(false);

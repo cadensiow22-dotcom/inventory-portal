@@ -39,6 +39,8 @@ export default function ItemsPage() {
   const [scanOpen, setScanOpen] = useState(false);
   const [lastScannedBarcode, setLastScannedBarcode] = useState<string>("");
   const [openedFromBarcode, setOpenedFromBarcode] = useState(false);
+  const normalizeBarcode = (s: string) =>
+  (s || "").replace(/\s+/g, "").trim();
 
   // --- Barcode/QR (additive) ---
   const [barcode, setBarcode] = useState("");
@@ -438,14 +440,17 @@ useEffect(() => {
     setLoading(false);
   }}
 />
+
 <MobileBarcodeScanner
   open={scanOpen}
   onClose={() => setScanOpen(false)}
   onDetected={(code) => {
-    setBarcode(code);
-    handleBarcodeLookup(code);
+    const clean = normalizeBarcode(code);
+    setBarcode(clean);
+    handleBarcodeLookup(clean);
   }}
 />
+
 
       <LinkBarcodeModal
         open={linkOpen && adminMode}

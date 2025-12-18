@@ -423,29 +423,32 @@ useEffect(() => {
   prefillBarcode={barcode} 
   onClose={() => setAddOpen(false)}
   onSuccess={async () => {
-    setAddOpen(false);
+  setAddOpen(false);
+  if (!categoryId) return;
 
-    // ✅ After creating + linking, re-run lookup to auto-open update modal
-    if (barcodeNotFound && barcode.trim()) {
-      setBarcodeNotFound(false);
-      await handleBarcodeLookup(barcode);
-    }
+  setLoading(true);
+  setErr(null);
 
-    if (!categoryId) return;
-    setLoading(true);
-    setErr(null);
+  const res = await supabase
+    .from("items")
+    .select("id,name,stock_count,search_text")
+    .eq("subcategory_id", categoryId)
+    .eq("is_active", true)
+    .limit(200);
 
-    const res = await supabase
-      .from("items")
-      .select("id,name,stock_count,search_text")
-      .eq("subcategory_id", categoryId)
-      .eq("is_active", true)
-      .limit(200);
+  if (res.error) setErr(res.error.message);
 
-    if (res.error) setErr(res.error.message);
-    setItems(res.data ?? []);
-    setLoading(false);
-  }}
+  const freshItems = res.data ?? [];
+  setItems(freshItems);
+  setLoading(false);
+
+  // ✅ IMPORTANT: now that items are refreshed, re-run barcode lookup
+  if (barcode.trim()) {
+    setBarcodeNotFound(false);
+    setBarcodeErr(null);
+    await handleBarcodeLookup(barcode.trim());
+  }
+}}
 />
 
 

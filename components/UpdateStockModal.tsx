@@ -114,7 +114,8 @@ export default function UpdateStockModal({
         aria-label="Close modal backdrop"
       />
 
-      <div className="relative w-full max-w-md rounded-xl bg-white p-4 shadow-lg">
+      <div className="relative w-full max-w-md rounded-xl bg-white shadow-lg max-h-[90vh] flex flex-col">
+        <div className="p-4 overflow-y-auto flex-1">
         <div className="mb-3">
           <h2 className="text-lg font-semibold">Update stock</h2>
           <p className="text-sm text-gray-600">
@@ -252,6 +253,7 @@ export default function UpdateStockModal({
   ) : null}
        </div>
       </div>
+    </div>
     </div>
   );
 }

@@ -420,11 +420,18 @@ useEffect(() => {
 <AddItemModal
   open={addOpen && adminMode}
   subcategoryId={categoryId!}
+  prefillBarcode={barcodeNotFound ? barcode : ""}   // ✅ pass scanned barcode
   onClose={() => setAddOpen(false)}
   onSuccess={async () => {
     setAddOpen(false);
-    if (!categoryId) return;
 
+    // ✅ After creating + linking, re-run lookup to auto-open update modal
+    if (barcodeNotFound && barcode.trim()) {
+      setBarcodeNotFound(false);
+      await handleBarcodeLookup(barcode);
+    }
+
+    if (!categoryId) return;
     setLoading(true);
     setErr(null);
 
@@ -440,6 +447,7 @@ useEffect(() => {
     setLoading(false);
   }}
 />
+
 
 <MobileBarcodeScanner
   open={scanOpen}

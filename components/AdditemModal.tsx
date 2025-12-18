@@ -1,9 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
-import NameDropdown from './NameDropdown';
-import { useEffect } from "react";
+import NameDropdown from "./NameDropdown";
 
 export default function AddItemModal({
   open,
@@ -16,22 +15,24 @@ export default function AddItemModal({
   onClose: () => void;
   subcategoryId: string;
   onSuccess: () => void;
-  prefillBarcode?: string; 
+  prefillBarcode?: string;
 }) {
   const [name, setName] = useState("");
   const [stock, setStock] = useState("0");
   const [searchText, setSearchText] = useState("");
   const [pin, setPin] = useState("");
   const [byName, setByName] = useState("");
-  const [byDate, setByDate] = useState(
-    new Date().toISOString().slice(0, 10)
-  );
+  const [byDate, setByDate] = useState(new Date().toISOString().slice(0, 10));
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [barcodeText, setBarcodeText] = useState(prefillBarcode ?? ""); // ✅ NEW
+  const [barcodeText, setBarcodeText] = useState(prefillBarcode ?? "");
 
-    useEffect(() => {
-    if (open) setBarcodeText(prefillBarcode ?? "");
+  useEffect(() => {
+    if (open) {
+      setBarcodeText(prefillBarcode ?? "");
+      setError("");
+      setLoading(false);
+    }
   }, [open, prefillBarcode]);
 
   if (!open) return null;
@@ -39,51 +40,45 @@ export default function AddItemModal({
   async function submit() {
     setError("");
     setLoading(true);
-    
+
     // REQUIRED FIELD CHECKS
-if (!name.trim()) {
-  setError("Item name is required.");
-  setLoading(false);
-  return;
-}
+    if (!name.trim()) {
+      setError("Item name is required.");
+      setLoading(false);
+      return;
+    }
+    if (!searchText.trim()) {
+      setError("Tags are required.");
+      setLoading(false);
+      return;
+    }
+    if (!byName.trim()) {
+      setError("Your name is required.");
+      setLoading(false);
+      return;
+    }
+    if (!/^\d{4}$/.test(pin.trim())) {
+      setError("PIN must be exactly 4 digits.");
+      setLoading(false);
+      return;
+    }
+    if (!stock.trim() || Number.isNaN(Number(stock))) {
+      setError("Initial stock is required.");
+      setLoading(false);
+      return;
+    }
+    if (!byDate) {
+      setError("Date is required.");
+      setLoading(false);
+      return;
+    }
 
-if (!searchText.trim()) {
-  setError("Tags are required.");
-  setLoading(false);
-  return;
-}
+    const bc = (barcodeText || "").trim();
 
-if (!byName.trim()) {
-  setError("Your name is required.");
-  setLoading(false);
-  return;
-}
+    // ✅ If barcode exists, use the "add + link" RPC instead
+    const rpcName = bc ? "add_item_and_link_barcode_with_pin" : "add_item_with_pin";
 
-if (!pin.trim()) {
-  setError("PIN is required.");
-  setLoading(false);
-  return;
-}
-
-if (!/^\d{4}$/.test(pin.trim())) {
-  setError("PIN must be exactly 4 digits.");
-  setLoading(false);
-  return;
-}
-if (!stock.trim() || Number.isNaN(Number(stock))) {
-  setError("Initial stock is required.");
-  setLoading(false);
-  return;
-}
-
-if (!byDate) {
-  setError("Date is required.");
-  setLoading(false);
-  return;
-}
-
-
-    const { error } = await supabase.rpc("add_item_with_pin", {
+    const payload: any = {
       p_name: name.trim(),
       p_stock_count: Number(stock),
       p_subcategory_id: subcategoryId,
@@ -92,7 +87,11 @@ if (!byDate) {
       p_changed_by_name: byName.trim(),
       p_changed_by_date: byDate,
       p_pin: pin.trim(),
-    });
+    };
+
+    if (bc) payload.p_barcode_text = bc;
+
+    const { error } = await supabase.rpc(rpcName, payload);
 
     if (error) {
       setError(error.message);
@@ -100,9 +99,9 @@ if (!byDate) {
       return;
     }
 
+    setLoading(false);
     onClose();
     onSuccess();
-    setLoading(false);
   }
 
   return (
@@ -126,12 +125,13 @@ if (!byDate) {
           value={stock}
           onChange={(e) => setStock(e.target.value)}
         />
+
         <input
           placeholder="Barcode (optional)"
           className="w-full border p-2 mb-2"
           value={barcodeText}
           onChange={(e) => setBarcodeText(e.target.value)}
-        /> 
+        />
 
         <input
           placeholder="Tags"
@@ -140,7 +140,7 @@ if (!byDate) {
           onChange={(e) => setSearchText(e.target.value)}
         />
 
-       <NameDropdown value={byName} onChange={setByName} />
+        <NameDropdown value={byName} onChange={setByName} />
 
         <input
           type="date"
@@ -153,24 +153,21 @@ if (!byDate) {
           placeholder="4-digit PIN"
           className="w-full border p-2 mb-4"
           value={pin}
-          onChange={(e) => setPin(e.target.value)}
+          onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
         />
 
         <div className="flex gap-2">
-          <button onClick={onClose} className="border px-4 py-2 w-1/2">
+          <button onClick={onClose} className="border px-4 py-2 w-1/2" disabled={loading}>
             Cancel
           </button>
+
           <button
-  onClick={submit}
-  disabled={loading || byName.trim() === ""}
-  className={`px-4 py-2 w-1/2 ${
-    byName.trim() === ""
-      ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-      : "bg-black text-white"
-  }`}
->
-  {loading ? "Adding…" : "Add"}
-</button>
+            onClick={submit}
+            disabled={loading}
+            className={`px-4 py-2 w-1/2 ${loading ? "bg-gray-300 text-gray-500" : "bg-black text-white"}`}
+          >
+            {loading ? "Adding…" : "Add"}
+          </button>
         </div>
       </div>
     </div>

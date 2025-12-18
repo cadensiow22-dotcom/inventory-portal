@@ -3,17 +3,20 @@
 import { useState } from "react";
 import { supabase } from "../lib/supabase";
 import NameDropdown from './NameDropdown';
+import { useEffect } from "react";
 
 export default function AddItemModal({
   open,
   onClose,
   subcategoryId,
   onSuccess,
+  prefillBarcode,
 }: {
   open: boolean;
   onClose: () => void;
   subcategoryId: string;
   onSuccess: () => void;
+  prefillBarcode?: string; 
 }) {
   const [name, setName] = useState("");
   const [stock, setStock] = useState("0");
@@ -25,6 +28,11 @@ export default function AddItemModal({
   );
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [barcodeText, setBarcodeText] = useState(prefillBarcode ?? ""); // ✅ NEW
+
+    useEffect(() => {
+    if (open) setBarcodeText(prefillBarcode ?? "");
+  }, [open, prefillBarcode]);
 
   if (!open) return null;
 
@@ -118,6 +126,12 @@ if (!byDate) {
           value={stock}
           onChange={(e) => setStock(e.target.value)}
         />
+        <input
+          placeholder="Barcode (optional)"
+          className="w-full border p-2 mb-2"
+          value={barcodeText}
+          onChange={(e) => setBarcodeText(e.target.value)}
+        /> 
 
         <input
           placeholder="Tags"

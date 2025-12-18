@@ -33,6 +33,74 @@ export default function ItemsPage() {
   const [historyItem, setHistoryItem] = useState<{ id: string; name: string } | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteItem, setDeleteItem] = useState<{ id: string; name: string } | null>(null);
+  // --- Barcode/QR (additive) ---
+  const [barcode, setBarcode] = useState("");
+  const [barcodeErr, setBarcodeErr] = useState<string | null>(null);
+  const [barcodeLoading, setBarcodeLoading] = useState(false);
+  const [barcodeNotFound, setBarcodeNotFound] = useState(false);
+
+  const isMobile = useMemo(() => {
+    if (typeof window === "undefined") return false;
+    return window.matchMedia?.("(max-width: 768px)")?.matches ?? false;
+  }, []);
+
+  const handleBarcodeLookup = async (codeRaw: string) => {
+    const code = (codeRaw || "").trim();
+    setBarcode(code);
+    setBarcodeErr(null);
+    setBarcodeNotFound(false);
+
+    if (!code) return;
+
+    setBarcodeLoading(true);
+    try {
+      // RPC to be implemented later:
+      // lookup_item_by_barcode(barcode_text text) -> returns { item_id } or full item
+      const { data, error } = await supabase.rpc("lookup_item_by_barcode", {
+        barcode_text: code,
+      });
+
+      if (error) throw error;
+
+      // Expecting ONE of these shapes (we’ll match your actual RPC later):
+      // 1) data = { item_id: "..." }
+      // 2) data = { id, name, stock_count }
+      // 3) data = [{ ... }]
+      const row = Array.isArray(data) ? data[0] : data;
+
+      const itemId = row?.item_id ?? row?.id ?? null;
+      if (!itemId) {
+        setBarcodeNotFound(true);
+        return;
+      }
+
+      // If RPC returns full item, use it; else find it in already-loaded items list
+      const found =
+        row?.name && typeof row?.stock_count === "number"
+          ? { id: itemId, name: row.name, stock_count: row.stock_count }
+          : items.find((x) => x.id === itemId);
+
+      if (!found) {
+        // Item exists but not in this subcategory's loaded list
+        // (e.g. barcode linked to an item in a different subcategory)
+        setBarcodeErr("Barcode is linked to an item outside this subcategory.");
+        return;
+      }
+
+      // Focus UX: set search to help highlight the item in list
+      setQ(found.name);
+
+      // Admin-only: open update modal immediately
+      if (adminMode) {
+        setSelectedItem(found);
+        setModalOpen(true);
+      }
+    } catch (e: any) {
+      setBarcodeErr(e?.message ?? "Barcode lookup failed.");
+    } finally {
+      setBarcodeLoading(false);
+    }
+  };
 
   const tokens = useMemo(() => {
     return q
@@ -125,7 +193,7 @@ useEffect(() => {
 
       <h1 className="mb-4 text-2xl font-bold">{title || "Items"}</h1>
 
-      <div className="mb-4 rounded-xl bg-white p-4 shadow">
+            <div className="mb-4 rounded-xl bg-white p-4 shadow">
         <label className="text-sm font-semibold">Search</label>
         <input
           value={q}
@@ -133,6 +201,68 @@ useEffect(() => {
           placeholder="e.g. philips gu10 warm white"
           className="mt-2 w-full rounded-lg border border-gray-300 p-3 outline-none focus:ring"
         />
+
+        {/* --- Barcode/QR Entry (additive, mobile-first) --- */}
+        <div className="mt-3 flex flex-col gap-2">
+          <div className="flex gap-2">
+            <input
+              value={barcode}
+              onChange={(e) => setBarcode(e.target.value)}
+              inputMode="numeric"
+              placeholder={isMobile ? "Scan or enter barcode" : "Enter barcode (desktop optional)"}
+              className="w-full rounded-lg border border-gray-300 p-3 text-sm outline-none focus:ring"
+            />
+
+            <button
+              type="button"
+              className="rounded-lg border px-3 py-2 text-sm hover:bg-gray-50 disabled:opacity-50"
+              disabled={barcodeLoading || !barcode.trim()}
+              onClick={() => handleBarcodeLookup(barcode)}
+            >
+              {barcodeLoading ? "Checking..." : "Check"}
+            </button>
+          </div>
+
+          {barcodeErr && (
+            <div className="rounded-lg border border-red-200 bg-red-50 p-2 text-xs text-red-700">
+              {barcodeErr}
+            </div>
+          )}
+
+          {barcodeNotFound && (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 p-2 text-xs text-amber-800">
+              Barcode not linked to any item.
+              {adminMode ? (
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    className="rounded-lg border px-3 py-1 text-xs hover:bg-white"
+                    onClick={() => setAddOpen(true)}
+                  >
+                    + Add new item
+                  </button>
+
+                  {/* Link flow will be added later as a NEW modal (LinkBarcodeModal) */}
+                  <button
+                    type="button"
+                    className="rounded-lg border px-3 py-1 text-xs hover:bg-white"
+                    onClick={() => {
+                      // placeholder for LinkBarcodeModal open
+                      alert("Link barcode flow not implemented yet.");
+                    }}
+                  >
+                    Link to existing item
+                  </button>
+                </div>
+              ) : (
+                <div className="mt-1 text-[11px] text-amber-700">
+                  Turn on Admin mode to add or link barcodes.
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
         <p className="mt-2 text-xs text-gray-500">
           Tip: brand + base + color + watts works best.
         </p>

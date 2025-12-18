@@ -8,6 +8,7 @@ import UpdateStockModal from '../../../components/UpdateStockModal';
 import AddItemModal from '../../../components/AdditemModal';
 import ItemHistoryModal from '../../../components/ItemHistoryModal';
 import DeleteItemModal from '../../../components/DeleteItemModal';
+import LinkBarcodeModal from '../../../components/LinkBarcodeModal';
 
 type Item = {
   id: string;
@@ -33,12 +34,13 @@ export default function ItemsPage() {
   const [historyItem, setHistoryItem] = useState<{ id: string; name: string } | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteItem, setDeleteItem] = useState<{ id: string; name: string } | null>(null);
+  const [linkOpen, setLinkOpen] = useState(false);
   // --- Barcode/QR (additive) ---
   const [barcode, setBarcode] = useState("");
   const [barcodeErr, setBarcodeErr] = useState<string | null>(null);
   const [barcodeLoading, setBarcodeLoading] = useState(false);
   const [barcodeNotFound, setBarcodeNotFound] = useState(false);
-
+  
   const isMobile = useMemo(() => {
     if (typeof window === "undefined") return false;
     return window.matchMedia?.("(max-width: 768px)")?.matches ?? false;
@@ -175,14 +177,13 @@ useEffect(() => {
 
         <div className="flex flex-wrap items-center gap-3">
           <button
-            type="button"
-            className={`rounded-lg border px-3 py-1 text-sm ${
-              adminMode ? "bg-black text-white" : "bg-white hover:bg-gray-50"
-            }`}
-            onClick={() => setAdminMode((v) => !v)}
-          >
-            {adminMode ? "Admin mode: ON" : "Admin mode: OFF"}
-          </button>
+  type="button"
+  className="rounded-lg border px-3 py-1 text-xs hover:bg-white"
+  onClick={() => setLinkOpen(true)}
+>
+  Link to existing item
+</button>
+
 
 
           <div className="text-xs text-gray-500">
@@ -246,10 +247,8 @@ useEffect(() => {
                   <button
                     type="button"
                     className="rounded-lg border px-3 py-1 text-xs hover:bg-white"
-                    onClick={() => {
-                      // placeholder for LinkBarcodeModal open
-                      alert("Link barcode flow not implemented yet.");
-                    }}
+                    onClick={() => setLinkOpen(true)}
+
                   >
                     Link to existing item
                   </button>
@@ -405,6 +404,20 @@ useEffect(() => {
     setLoading(false);
   }}
 />
+
+      <LinkBarcodeModal
+        open={linkOpen && adminMode}
+        barcodeText={barcode}
+        items={items}
+        onClose={() => setLinkOpen(false)}
+        onLinked={() => {
+          setLinkOpen(false);
+          setBarcodeNotFound(false);
+          setBarcodeErr(null);
+          // Re-run lookup so it selects item and can open UpdateStockModal
+          handleBarcodeLookup(barcode);
+        }}
+      />
 
 
       <ItemHistoryModal

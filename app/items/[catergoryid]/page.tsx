@@ -37,6 +37,8 @@ export default function ItemsPage() {
   const [deleteItem, setDeleteItem] = useState<{ id: string; name: string } | null>(null);
   const [linkOpen, setLinkOpen] = useState(false);
   const [scanOpen, setScanOpen] = useState(false);
+  const [lastScannedBarcode, setLastScannedBarcode] = useState<string>("");
+  const [openedFromBarcode, setOpenedFromBarcode] = useState(false);
 
   // --- Barcode/QR (additive) ---
   const [barcode, setBarcode] = useState("");
@@ -58,62 +60,53 @@ useEffect(() => {
 
 
   const handleBarcodeLookup = async (codeRaw: string) => {
-    const code = (codeRaw || "").trim();
-    setBarcode(code);
-    setBarcodeErr(null);
-    setBarcodeNotFound(false);
+  const code = (codeRaw || "").trim();
+  setBarcode(code);
+  setBarcodeErr(null);
+  setBarcodeNotFound(false);
 
-    if (!code) return;
+  if (!code) return;
 
-    setBarcodeLoading(true);
-    try {
-      // RPC to be implemented later:
-      // lookup_item_by_barcode(barcode_text text) -> returns { item_id } or full item
-      const { data, error } = await supabase.rpc("lookup_item_by_barcode", {
-        p_barcode_text: code,
-      });
+  setBarcodeLoading(true);
+  try {
+    const { data, error } = await supabase.rpc("lookup_item_by_barcode", {
+      p_barcode_text: code,
+    });
 
-      if (error) throw error;
+    if (error) throw error;
 
-      // Expecting ONE of these shapes (we’ll match your actual RPC later):
-      // 1) data = { item_id: "..." }
-      // 2) data = { id, name, stock_count }
-      // 3) data = [{ ... }]
-      const row = Array.isArray(data) ? data[0] : data;
+    const row = Array.isArray(data) ? data[0] : data;
+    const itemId = row?.item_id ?? row?.id ?? null;
 
-      const itemId = row?.item_id ?? row?.id ?? null;
-      if (!itemId) {
-        setBarcodeNotFound(true);
-        return;
-      }
-
-      // If RPC returns full item, use it; else find it in already-loaded items list
-      const found =
-        row?.name && typeof row?.stock_count === "number"
-          ? { id: itemId, name: row.name, stock_count: row.stock_count }
-          : items.find((x) => x.id === itemId);
-
-      if (!found) {
-        // Item exists but not in this subcategory's loaded list
-        // (e.g. barcode linked to an item in a different subcategory)
-        setBarcodeErr("Barcode is linked to an item outside this subcategory.");
-        return;
-      }
-
-      // Focus UX: set search to help highlight the item in list
-      setQ(found.name);
-
-      // Admin-only: open update modal immediately
-      if (adminMode) {
-        setSelectedItem(found);
-        setModalOpen(true);
-      }
-    } catch (e: any) {
-      setBarcodeErr(e?.message ?? "Barcode lookup failed.");
-    } finally {
-      setBarcodeLoading(false);
+    if (!itemId) {
+      setBarcodeNotFound(true);
+      return;
     }
-  };
+
+    const found =
+      row?.name && typeof row?.stock_count === "number"
+        ? { id: itemId, name: row.name, stock_count: row.stock_count }
+        : items.find((x) => x.id === itemId);
+
+    if (!found) {
+      setBarcodeErr("Barcode is linked to an item outside this subcategory.");
+      return;
+    }
+
+    setQ(found.name);
+
+    if (adminMode) {
+      setLastScannedBarcode(code);
+      setOpenedFromBarcode(true);
+      setSelectedItem(found);
+      setModalOpen(true);
+    }
+  } catch (e: any) {
+    setBarcodeErr(e?.message ?? "Barcode lookup failed.");
+  } finally {
+    setBarcodeLoading(false);
+  }
+};
 
   const tokens = useMemo(() => {
     return q
@@ -380,30 +373,47 @@ useEffect(() => {
       )}
 
       <UpdateStockModal
-        open={modalOpen && adminMode}
-        item={selectedItem}
-        onClose={() => {
-          setModalOpen(false);
-          setSelectedItem(null);
-        }}
-        onSuccess={async () => {
-          if (!categoryId) return;
+  open={modalOpen && adminMode}
+  item={selectedItem}
 
-          setLoading(true);
-          setErr(null);
+  openedFromBarcode={openedFromBarcode}
+  barcodeText={lastScannedBarcode}
 
-          const res = await supabase
-            .from("items")
-            .select("id,name,stock_count,search_text")
-            .eq("subcategory_id", categoryId)
-            .eq("is_active", true)
-            .limit(200);
+  onClose={() => {
+    setModalOpen(false);
+    setSelectedItem(null);
+    setOpenedFromBarcode(false);
+    setLastScannedBarcode("");
+  }}
 
-          if (res.error) setErr(res.error.message);
-          setItems(res.data ?? []);
-          setLoading(false);
-        }}
-      />
+  onUnlinked={() => {
+    // Option A: close modal + reset barcode state
+    setBarcode("");
+    setBarcodeErr(null);
+    setBarcodeNotFound(false);
+    setOpenedFromBarcode(false);
+    setLastScannedBarcode("");
+  }}
+
+  onSuccess={async () => {
+    if (!categoryId) return;
+
+    setLoading(true);
+    setErr(null);
+
+    const res = await supabase
+      .from("items")
+      .select("id,name,stock_count,search_text")
+      .eq("subcategory_id", categoryId)
+      .eq("is_active", true)
+      .limit(200);
+
+    if (res.error) setErr(res.error.message);
+    setItems(res.data ?? []);
+    setLoading(false);
+  }}
+/>
+
 
 <AddItemModal
   open={addOpen && adminMode}

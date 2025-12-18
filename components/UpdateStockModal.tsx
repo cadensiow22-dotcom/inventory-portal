@@ -15,9 +15,24 @@ type Props = {
   onClose: () => void;
   item: ItemRow | null;
   onSuccess: () => void;
+
+  // NEW (optional, so nothing breaks elsewhere)
+  openedFromBarcode?: boolean;
+  barcodeText?: string;
+  onUnlinked?: () => void;
 };
 
-export default function UpdateStockModal({ open, onClose, item, onSuccess }: Props) {
+
+export default function UpdateStockModal({
+  open,
+  onClose,
+  item,
+  onSuccess,
+  openedFromBarcode = false,
+  barcodeText = "",
+  onUnlinked,
+}: Props) {
+
   const [newStock, setNewStock] = useState<string>("");
   const [changedByName, setChangedByName] = useState<string>("");
 

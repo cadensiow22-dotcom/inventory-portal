@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
-import { compare } from "bcryptjs";
+const { compare } = await import("bcryptjs");
 export const runtime = "nodejs";
 
 export async function POST(req: Request) {

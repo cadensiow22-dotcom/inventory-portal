@@ -121,15 +121,20 @@ const rpcName = useBarcodeFlow
   }
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-xl p-4 w-full max-w-md">
-        <h2 className="text-lg font-bold mb-3">Add Item</h2>
+  <div className="fixed inset-0 z-50 bg-black/60 flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div className="w-full sm:max-w-lg bg-white rounded-t-2xl sm:rounded-2xl shadow-xl max-h-[92vh] flex flex-col overflow-hidden">
+      
+      {/* Header (sticky) */}
+      <div className="sticky top-0 bg-white border-b border-neutral-200 px-4 py-3">
+        <h2 className="text-base sm:text-lg font-semibold">Add Item</h2>
+        {error && <p className="text-red-600 text-sm mt-2">{error}</p>}
+      </div>
 
-        {error && <p className="text-red-600 text-sm mb-2">{error}</p>}
-
+      {/* Body (scrolls) */}
+      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
         <input
           placeholder="Item name"
-          className="w-full border p-2 mb-2"
+          className="w-full border rounded-lg p-2"
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
@@ -137,55 +142,68 @@ const rpcName = useBarcodeFlow
         <input
           type="number"
           placeholder="Initial stock"
-          className="w-full border p-2 mb-2"
+          className="w-full border rounded-lg p-2"
           value={stock}
           onChange={(e) => setStock(e.target.value)}
         />
 
         <input
           placeholder="Barcode (optional)"
-          className="w-full border p-2 mb-2"
+          className="w-full border rounded-lg p-2"
           value={barcodeText}
           onChange={(e) => setBarcodeText(e.target.value)}
         />
 
         <input
           placeholder="Tags"
-          className="w-full border p-2 mb-2"
+          className="w-full border rounded-lg p-2"
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
         />
 
-        <NameDropdown value={byName} onChange={setByName} />
+        <div className="pt-1">
+          <NameDropdown value={byName} onChange={setByName} />
+        </div>
 
         <input
           type="date"
-          className="w-full border p-2 mb-2"
+          className="w-full border rounded-lg p-2"
           value={byDate}
           onChange={(e) => setByDate(e.target.value)}
         />
 
         <input
           placeholder="4-digit PIN"
-          className="w-full border p-2 mb-4"
+          className="w-full border rounded-lg p-2"
           value={pin}
           onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
         />
+      </div>
 
+      {/* Footer (sticky buttons) */}
+      <div className="sticky bottom-0 bg-white border-t border-neutral-200 px-4 py-3">
         <div className="flex gap-2">
-          <button onClick={onClose} className="border px-4 py-2 w-1/2" disabled={loading}>
+          <button
+            onClick={onClose}
+            className="border rounded-lg px-4 py-2 w-1/2"
+            disabled={loading}
+          >
             Cancel
           </button>
 
           <button
             onClick={submit}
             disabled={loading}
-            className={`px-4 py-2 w-1/2 ${loading ? "bg-gray-300 text-gray-500" : "bg-black text-white"}`}
+            className={`rounded-lg px-4 py-2 w-1/2 ${
+              loading ? "bg-gray-300 text-gray-500" : "bg-black text-white"
+            }`}
           >
             {loading ? "Adding…" : "Add"}
           </button>
         </div>
       </div>
+
     </div>
-  );
+  </div>
+);
 }

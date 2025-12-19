@@ -10,15 +10,14 @@ export async function GET() {
 
   if (error) {
     return NextResponse.json(
-      { signature: "pdf-list-v3", where: "app/api/pdfs/list/route.ts", error: error.message },
+      { signature: "LIST_ROUTE_VERCEL_PROOF_123", file: "app/api/pdfs/list/route.ts", error: error.message },
       { status: 400 }
     );
   }
 
   return NextResponse.json({
-    signature: "pdf-list-v3",
-    where: "app/api/pdfs/list/route.ts",
-    commit: process.env.VERCEL_GIT_COMMIT_SHA || null,
+    signature: "LIST_ROUTE_VERCEL_PROOF_123",
+    file: "app/api/pdfs/list/route.ts",
     data,
   });
 }

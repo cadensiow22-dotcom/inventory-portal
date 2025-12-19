@@ -328,7 +328,7 @@ useEffect(() => {
 
                 <div className="sm:text-right">
                   <div className="text-xs text-gray-500">Stock</div>
-                  <div className="text-xl font-bold">{it.stock_count}</div>
+                  <div className="text-2xl font-semibold">{it.stock_count}</div>
 
                   {adminMode && (
                     <button

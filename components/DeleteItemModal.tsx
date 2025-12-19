@@ -58,11 +58,14 @@ export default function DeleteItemModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-      <button className="absolute inset-0 bg-black/60" onClick={onClose} />
+  <div className="fixed inset-0 z-50 bg-black/60 flex items-end sm:items-center justify-center p-0 sm:p-4">
+    {/* Backdrop click */}
+    <button className="absolute inset-0" onClick={onClose} aria-label="Close modal" />
 
-      <div className="relative w-full max-w-md rounded-xl bg-white p-4 shadow-lg">
-        <h2 className="text-lg font-semibold text-red-600">Delete item</h2>
+    <div className="relative w-full sm:max-w-lg bg-white rounded-t-2xl sm:rounded-2xl shadow-xl max-h-[92vh] flex flex-col overflow-hidden">
+      {/* Header (sticky) */}
+      <div className="sticky top-0 bg-white border-b border-neutral-200 px-4 py-3">
+        <h2 className="text-base sm:text-lg font-semibold text-red-600">Delete item</h2>
 
         <p className="mt-2 text-sm">
           You are about to delete:
@@ -70,51 +73,70 @@ export default function DeleteItemModal({
           <b>{item.name}</b>
         </p>
 
-        <p className="mt-2 text-sm text-red-600">
-          This action cannot be undone.
-        </p>
-
-        <label className="mt-4 block text-sm font-semibold">
-          Type <b>DELETE</b> to confirm
-        </label>
-        <input
-          value={confirmText}
-          onChange={(e) => setConfirmText(e.target.value)}
-          className="mt-1 w-full rounded-lg border p-2"
-        />
-         <NameDropdown value={byName} onChange={setByName} />
-
-         <label className="mt-3 block text-sm font-semibold">Date</label>
-         <input
-          type="date"
-          value={byDate}
-          onChange={(e) => setByDate(e.target.value)}
-          className="mt-1 w-full rounded-lg border p-2"
-            />
-
-        <label className="mt-3 block text-sm font-semibold">Admin PIN</label>
-        <input
-          type="password"
-          value={pin}
-          onChange={(e) => setPin(e.target.value)}
-          className="mt-1 w-full rounded-lg border p-2"
-        />
+        <p className="mt-2 text-sm text-red-600">This action cannot be undone.</p>
 
         {err && <p className="mt-2 text-sm text-red-600">{err}</p>}
+      </div>
 
-        <div className="mt-4 flex justify-end gap-2">
-          <button className="rounded-lg border px-3 py-1" onClick={onClose}>
+      {/* Body (scrolls) */}
+      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+        <div>
+          <label className="block text-sm font-semibold">
+            Type <b>DELETE</b> to confirm
+          </label>
+          <input
+            value={confirmText}
+            onChange={(e) => setConfirmText(e.target.value)}
+            className="mt-1 w-full rounded-lg border p-2"
+          />
+        </div>
+
+        <div>
+          <NameDropdown value={byName} onChange={setByName} />
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold">Date</label>
+          <input
+            type="date"
+            value={byDate}
+            onChange={(e) => setByDate(e.target.value)}
+            className="mt-1 w-full rounded-lg border p-2"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold">Admin PIN</label>
+          <input
+            type="password"
+            value={pin}
+            onChange={(e) => setPin(e.target.value)}
+            className="mt-1 w-full rounded-lg border p-2"
+          />
+        </div>
+      </div>
+
+      {/* Footer (sticky buttons always reachable) */}
+      <div className="sticky bottom-0 bg-white border-t border-neutral-200 px-4 py-3">
+        <div className="flex gap-2">
+          <button
+            className="w-1/2 rounded-lg border px-3 py-2"
+            onClick={onClose}
+            disabled={loading}
+          >
             Cancel
           </button>
+
           <button
             disabled={loading}
-            className="rounded-lg bg-red-600 px-3 py-1 text-white disabled:opacity-50"
+            className="w-1/2 rounded-lg bg-red-600 px-3 py-2 text-white disabled:opacity-50"
             onClick={handleDelete}
           >
-            Delete
+            {loading ? "Deleting..." : "Delete"}
           </button>
         </div>
       </div>
     </div>
-  );
+  </div>
+);
 }

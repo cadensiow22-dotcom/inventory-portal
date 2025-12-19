@@ -99,27 +99,31 @@ export default function LinkBarcodeModal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-      <button
-        className="absolute inset-0 bg-black/60"
-        onClick={onClose}
-        aria-label="Close modal backdrop"
-      />
+  <div className="fixed inset-0 z-50 bg-black/60 flex items-end sm:items-center justify-center p-0 sm:p-4">
+    {/* Backdrop click */}
+    <button
+      className="absolute inset-0"
+      onClick={onClose}
+      aria-label="Close modal backdrop"
+    />
 
-      <div className="relative w-full max-w-md rounded-xl bg-white p-4 shadow-lg">
-        <div className="mb-3">
-          <h2 className="text-lg font-semibold">Link barcode to item</h2>
-          <p className="text-sm text-gray-600 break-all">
-            Barcode: <span className="font-mono">{barcodeText || "-"}</span>
-          </p>
-        </div>
+    <div className="relative w-full sm:max-w-lg bg-white rounded-t-2xl sm:rounded-2xl shadow-xl max-h-[92vh] flex flex-col overflow-hidden">
+      {/* Header (sticky) */}
+      <div className="sticky top-0 bg-white border-b border-neutral-200 px-4 py-3">
+        <h2 className="text-base sm:text-lg font-semibold">Link barcode to item</h2>
+        <p className="text-sm text-gray-600 break-all mt-1">
+          Barcode: <span className="font-mono">{barcodeText || "-"}</span>
+        </p>
 
         {errorMsg ? (
-          <div className="mb-3 rounded-lg bg-red-50 p-3 text-sm text-red-700">
+          <div className="mt-2 rounded-lg bg-red-50 p-3 text-sm text-red-700">
             {errorMsg}
           </div>
         ) : null}
+      </div>
 
+      {/* Body (scrolls) */}
+      <div className="flex-1 overflow-y-auto px-4 py-3">
         <div className="space-y-3">
           <div>
             <label className="block text-sm font-medium">Find item</label>
@@ -145,6 +149,7 @@ export default function LinkBarcodeModal({
                 </option>
               ))}
             </select>
+
             <p className="mt-1 text-xs text-gray-500">
               Showing {filtered.length} item(s)
             </p>
@@ -177,8 +182,11 @@ export default function LinkBarcodeModal({
             />
           </div>
         </div>
+      </div>
 
-        <div className="mt-4 flex gap-2">
+      {/* Footer (sticky buttons always reachable) */}
+      <div className="sticky bottom-0 bg-white border-t border-neutral-200 px-4 py-3">
+        <div className="flex gap-2">
           <button
             className="w-1/2 rounded-lg border px-3 py-2"
             onClick={onClose}
@@ -197,5 +205,6 @@ export default function LinkBarcodeModal({
         </div>
       </div>
     </div>
-  );
+  </div>
+);
 }

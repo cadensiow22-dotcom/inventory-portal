@@ -69,58 +69,101 @@ async function submit() {
 
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-xl p-4 w-full max-w-md">
-        <h2 className="text-lg font-bold mb-3">Change Admin PIN</h2>
+  <div className="fixed inset-0 z-50 bg-black/60 flex items-end sm:items-center justify-center p-0 sm:p-4">
+    {/* Backdrop click to close */}
+    <button
+      className="absolute inset-0"
+      onClick={onClose}
+      aria-label="Close modal backdrop"
+    />
 
-        {err && <p className="text-red-600 text-sm mb-2">{err}</p>}
-        <input
-          placeholder="Owner PIN (full-timers only)"
-          className="w-full border p-2 mb-2"
-          value={ownerPin}
-          onChange={(e) => setOwnerPin(e.target.value.replace(/\D/g, "").slice(0, 8))}
-/>
+    <div className="relative w-full sm:max-w-lg bg-white rounded-t-2xl sm:rounded-2xl shadow-xl max-h-[92vh] flex flex-col overflow-hidden">
+      {/* Header (sticky) */}
+      <div className="sticky top-0 bg-white border-b border-neutral-200 px-4 py-3">
+        <h2 className="text-base sm:text-lg font-semibold">Change Admin PIN</h2>
+        {err && <p className="text-red-600 text-sm mt-2">{err}</p>}
+      </div>
 
-        <input
-          placeholder="Current 4-digit PIN"
-          className="w-full border p-2 mb-2"
-          value={currentPin}
-          onChange={(e) => setCurrentPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
-        />
+      {/* Body (scrolls) */}
+      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+        <div>
+          <label className="block text-sm font-medium">
+            Owner PIN (full-timers only)
+          </label>
+          <input
+            placeholder="Owner PIN (full-timers only)"
+            className="mt-1 w-full border rounded-lg p-2"
+            value={ownerPin}
+            onChange={(e) => setOwnerPin(e.target.value.replace(/\D/g, "").slice(0, 8))}
+          />
+        </div>
 
-        <input
-          placeholder="New 4-digit PIN"
-          className="w-full border p-2 mb-2"
-          value={newPin}
-          onChange={(e) => setNewPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
-        />
+        <div>
+          <label className="block text-sm font-medium">Current 4-digit PIN</label>
+          <input
+            placeholder="Current 4-digit PIN"
+            className="mt-1 w-full border rounded-lg p-2"
+            value={currentPin}
+            onChange={(e) => setCurrentPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
+          />
+        </div>
 
-        <NameDropdown value={byName} onChange={setByName} />
-        <input
-          type="date"
-          className="w-full border p-2 mb-4"
-          value={byDate}
-          onChange={(e) => setByDate(e.target.value)}
-        />
+        <div>
+          <label className="block text-sm font-medium">New 4-digit PIN</label>
+          <input
+            placeholder="New 4-digit PIN"
+            className="mt-1 w-full border rounded-lg p-2"
+            value={newPin}
+            onChange={(e) => setNewPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
+          />
+        </div>
 
+        <div className="pt-1">
+          <NameDropdown value={byName} onChange={setByName} />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium">Date</label>
+          <input
+            type="date"
+            className="mt-1 w-full border rounded-lg p-2"
+            value={byDate}
+            onChange={(e) => setByDate(e.target.value)}
+          />
+        </div>
+      </div>
+
+      {/* Footer (sticky buttons always reachable) */}
+      <div className="sticky bottom-0 bg-white border-t border-neutral-200 px-4 py-3">
         <div className="flex gap-2">
-          <button onClick={onClose} className="border px-4 py-2 w-1/2">
+          <button
+            onClick={onClose}
+            className="border rounded-lg px-4 py-2 w-1/2"
+            disabled={loading}
+          >
             Cancel
           </button>
-         <button
-  onClick={submit}
-    disabled={loading || byName.trim() === "" || ownerPin.trim() === "" || currentPin.length !== 4 || newPin.length !== 4}
-  className={`px-4 py-2 w-1/2 ${
-    byName.trim() === ""
-      ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-      : "bg-black text-white"
-  }`}
->
-  {loading ? "Changing…" : "Change"}
-</button>
 
+          <button
+            onClick={submit}
+            disabled={
+              loading ||
+              byName.trim() === "" ||
+              ownerPin.trim() === "" ||
+              currentPin.length !== 4 ||
+              newPin.length !== 4
+            }
+            className={`rounded-lg px-4 py-2 w-1/2 ${
+              loading || byName.trim() === "" || ownerPin.trim() === "" || currentPin.length !== 4 || newPin.length !== 4
+                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                : "bg-black text-white"
+            }`}
+          >
+            {loading ? "Changing…" : "Change"}
+          </button>
         </div>
       </div>
     </div>
-  );
+  </div>
+);
 }

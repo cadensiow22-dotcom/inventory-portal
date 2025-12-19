@@ -175,9 +175,9 @@ useEffect(() => {
   }, [items, tokens]);
 
   return (
-  <main className="min-h-screen bg-gray-100 p-6">
-    <div className="mx-auto max-w-3xl">
-      <div className="mb-4 flex items-center justify-between gap-3">
+  <main className="min-h-screen bg-transparent">
+    <div className="mx-auto w-full max-w-5xl">
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <Link href="/" className="text-blue-600 hover:underline">
           ← Home
         </Link>
@@ -202,29 +202,29 @@ useEffect(() => {
 
       <h1 className="mb-4 text-2xl font-bold">{title || "Items"}</h1>
 
-            <div className="mb-4 rounded-xl bg-white p-4 shadow">
+        <div className="mb-4 rounded-2xl bg-white p-4 sm:p-5 shadow-sm ring-1 ring-neutral-200">
         <label className="text-sm font-semibold">Search</label>
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="e.g. philips gu10 warm white"
-          className="mt-2 w-full rounded-lg border border-gray-300 p-3 outline-none focus:ring"
+          className="mt-2 w-full rounded-xl border border-gray-300 p-3 outline-none focus:ring-2 focus:ring-black/10"
         />
 
         {/* --- Barcode/QR Entry (additive, mobile-first) --- */}
         <div className="mt-3 flex flex-col gap-2">
-          <div className="flex gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row">
             <input
               value={barcode}
               onChange={(e) => setBarcode(e.target.value)}
               inputMode="numeric"
               placeholder={isMobile ? "Scan or enter barcode" : "Enter barcode (desktop optional)"}
-              className="w-full rounded-lg border border-gray-300 p-3 text-sm outline-none focus:ring"
+              className="w-full rounded-xl border border-gray-300 p-3 text-sm outline-none focus:ring-2 focus:ring-black/10"
             />
 
             <button
               type="button"
-              className="rounded-lg border px-3 py-2 text-sm hover:bg-gray-50 disabled:opacity-50"
+              className="rounded-xl border px-4 py-3 text-sm hover:bg-gray-50 disabled:opacity-50"
               disabled={barcodeLoading || !barcode.trim()}
               onClick={() => handleBarcodeLookup(barcode)}
             >
@@ -293,7 +293,7 @@ useEffect(() => {
 
       {adminMode && (
         <button
-  className="mb-4 rounded-lg border px-4 py-2 text-sm hover:bg-gray-50"
+  className="mb-4 w-full sm:w-auto rounded-xl border px-4 py-3 text-sm hover:bg-gray-50"
   onClick={() => {
     setAddPrefillBarcode("");      // ✅ IMPORTANT: normal add = no barcode
     setAddOpen(true);
@@ -313,26 +313,26 @@ useEffect(() => {
       )}
 
       {!loading && !err && (
-        <div className="space-y-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <p className="text-sm text-gray-600">
             Showing <b>{filtered.length}</b> item(s)
           </p>
 
           {filtered.map((it) => (
-            <div key={it.id} className="rounded-xl bg-white p-4 shadow">
-              <div className="flex items-center justify-between gap-3">
+            <div key={it.id} className="rounded-2xl bg-white p-4 sm:p-5 shadow-sm ring-1 ring-neutral-200">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <div className="font-semibold">{it.name}</div>
                   <div className="text-xs text-gray-500">{it.search_text}</div>
                 </div>
 
-                <div className="text-right">
+                <div className="sm:text-right">
                   <div className="text-xs text-gray-500">Stock</div>
                   <div className="text-xl font-bold">{it.stock_count}</div>
 
                   {adminMode && (
                     <button
-                      className="mt-2 rounded-lg border px-3 py-1 text-sm hover:bg-gray-50"
+                      className="mt-2 w-full sm:w-auto rounded-xl border px-4 py-2 text-sm hover:bg-gray-50"
                       onClick={() => {
                         setSelectedItem({
                           id: it.id,
@@ -348,7 +348,7 @@ useEffect(() => {
 
                   {adminMode && (
                     <button
-                      className="mt-2 rounded-lg border px-3 py-1 text-sm hover:bg-gray-50"
+                      className="mt-2 w-full sm:w-auto rounded-xl border px-4 py-2 text-sm hover:bg-gray-50"
                       onClick={() => {
                         setHistoryItem({ id: it.id, name: it.name });
                         setHistoryOpen(true);
@@ -360,7 +360,7 @@ useEffect(() => {
 
                   {adminMode && (
                     <button
-                      className="mt-2 rounded-lg border border-red-300 px-3 py-1 text-sm text-red-600 hover:bg-red-50"
+                      className="mt-2 w-full sm:w-auto rounded-xl border border-red-300 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
                       onClick={() => {
                         setDeleteItem({ id: it.id, name: it.name });
                         setDeleteOpen(true);

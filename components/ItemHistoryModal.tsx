@@ -57,31 +57,43 @@ export default function ItemHistoryModal({
   if (!open || !itemId) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-      <button
-        className="absolute inset-0 bg-black/60"
-        onClick={onClose}
-        aria-label="Close modal backdrop"
-      />
+  <div className="fixed inset-0 z-50 bg-black/60 flex items-end sm:items-center justify-center p-0 sm:p-4">
+    {/* Backdrop click */}
+    <button
+      className="absolute inset-0"
+      onClick={onClose}
+      aria-label="Close modal backdrop"
+    />
 
-      <div className="relative w-full max-w-xl rounded-xl bg-white p-4 shadow-lg">
-        <div className="mb-3 flex items-start justify-between gap-3">
-          <div>
-            <h2 className="text-lg font-semibold">History</h2>
-            <p className="text-sm text-gray-600">{itemName ?? itemId}</p>
+    <div className="relative w-full sm:max-w-2xl bg-white rounded-t-2xl sm:rounded-2xl shadow-xl max-h-[92vh] flex flex-col overflow-hidden">
+      {/* Header (sticky) */}
+      <div className="sticky top-0 bg-white border-b border-neutral-200 px-4 py-3">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h2 className="text-base sm:text-lg font-semibold">History</h2>
+            <p className="text-sm text-gray-600 truncate">
+              {itemName ?? itemId}
+            </p>
           </div>
-          <button className="rounded-lg border px-3 py-1" onClick={onClose}>
+
+          <button
+            className="shrink-0 rounded-lg border px-3 py-2 text-sm"
+            onClick={onClose}
+          >
             Close
           </button>
         </div>
 
-        {loading && <p className="text-sm">Loading…</p>}
-
         {err ? (
-          <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">
+          <div className="mt-2 rounded-lg bg-red-50 p-3 text-sm text-red-700">
             {err}
           </div>
         ) : null}
+      </div>
+
+      {/* Body (scrolls) */}
+      <div className="flex-1 overflow-y-auto px-4 py-3">
+        {loading && <p className="text-sm">Loading…</p>}
 
         {!loading && !err && logs.length === 0 ? (
           <div className="rounded-lg bg-gray-50 p-4 text-sm text-gray-700">
@@ -90,7 +102,7 @@ export default function ItemHistoryModal({
         ) : null}
 
         {!loading && !err && logs.length > 0 ? (
-           <div className="max-h-[60vh] overflow-y-auto space-y-2 pr-1">
+          <div className="space-y-2">
             {logs.map((l) => (
               <div key={l.id} className="rounded-lg border p-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
@@ -105,22 +117,20 @@ export default function ItemHistoryModal({
                 <div className="mt-1 text-sm text-gray-800">
                   {l.before_count} → {l.after_count}{" "}
                   <span className="text-gray-500">
-  {(() => {
-    const delta = l.change_amount ?? 0;
-    return (
-      <>
-        ({delta >= 0 ? "+" : ""}
-        {delta})
-      </>
-    );
-  })()}
-</span>
-
+                    {(() => {
+                      const delta = l.change_amount ?? 0;
+                      return (
+                        <>
+                          ({delta >= 0 ? "+" : ""}
+                          {delta})
+                        </>
+                      );
+                    })()}
+                  </span>
                 </div>
 
                 <div className="mt-1 text-xs text-gray-600">
-                  By: {l.changed_by_name ?? "-"} | Date:{" "}
-                  {l.changed_by_date ?? "-"}
+                  By: {l.changed_by_name ?? "-"} | Date: {l.changed_by_date ?? "-"}
                 </div>
 
                 {l.note ? (
@@ -133,6 +143,12 @@ export default function ItemHistoryModal({
           </div>
         ) : null}
       </div>
+
+      {/* Footer (optional small hint) */}
+      <div className="border-t border-neutral-200 px-4 py-2 text-xs text-gray-500">
+        Showing latest 20 logs
+      </div>
     </div>
-  );
+  </div>
+);
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
-import bcrypt from "bcryptjs";
+import { compare } from "bcryptjs";
+export const runtime = "nodejs";
 
 export async function POST(req: Request) {
   const formData = await req.formData();
@@ -28,7 +29,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Owner PIN settings not found" }, { status: 500 });
   }
 
-  const ok = await bcrypt.compare(ownerPin, pinRow.owner_pin_hash);
+  const ok = await compare(ownerPin, pinRow.owner_pin_hash);
   if (!ok) {
     return NextResponse.json({ error: "Invalid owner PIN" }, { status: 401 });
   }

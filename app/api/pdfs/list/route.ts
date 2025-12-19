@@ -8,7 +8,17 @@ export async function GET() {
     .eq("is_active", true)
     .order("uploaded_at", { ascending: false });
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+  if (error) {
+    return NextResponse.json(
+      { signature: "pdf-list-v3", where: "app/api/pdfs/list/route.ts", error: error.message },
+      { status: 400 }
+    );
+  }
 
-  return NextResponse.json({ data });
+  return NextResponse.json({
+    signature: "pdf-list-v3",
+    where: "app/api/pdfs/list/route.ts",
+    commit: process.env.VERCEL_GIT_COMMIT_SHA || null,
+    data,
+  });
 }

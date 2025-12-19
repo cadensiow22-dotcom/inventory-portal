@@ -18,10 +18,20 @@ export default function PdfLibraryPage() {
   const [loading, setLoading] = useState(false);
 
   async function loadPdfs() {
-    const res = await fetch('/api/pdfs/list');
-    const json = await res.json();
-    setPdfs(json.data ?? []);
+  setErr(""); // clear old errors
+
+  const res = await fetch("/api/pdfs/list");
+  const json = await res.json();
+
+  if (!res.ok) {
+    setErr(json.error || "Failed to load PDFs");
+    setPdfs([]);
+    return;
   }
+
+  setPdfs(json.data ?? []);
+}
+
 
   useEffect(() => {
     loadPdfs();

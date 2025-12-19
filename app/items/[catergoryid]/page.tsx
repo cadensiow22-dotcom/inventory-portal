@@ -186,7 +186,7 @@ useEffect(() => {
   <button
     type="button"
     className={`rounded-lg border px-3 py-1 text-sm ${
-      adminMode ? "bg-black text-white" : "bg-white hover:bg-gray-50"
+      adminMode ? "bg-blue-600 text-white" : "bg-white hover:bg-gray-50"
     }`}
     onClick={() => setAdminMode((v) => !v)}
   >
@@ -200,9 +200,12 @@ useEffect(() => {
 
       </div>
 
-      <h1 className="mb-4 text-2xl font-bold">{title || "Items"}</h1>
+      <h1 className="mb-4 inline-block text-2xl font-bold">
+  {title || "Items"}
+  <span className="mt-1 block h-1 w-10 rounded-full bg-blue-600"></span>
+</h1>
 
-        <div className="mb-4 rounded-2xl bg-white p-4 sm:p-5 shadow-sm ring-1 ring-neutral-200">
+        <div className="rounded-2xl bg-white p-4 sm:p-5 shadow-sm ring-1 ring-neutral-200 border-t-4 border-t-blue-600">
         <label className="text-sm font-semibold">Search</label>
         <input
           value={q}
@@ -314,65 +317,70 @@ useEffect(() => {
 
       {!loading && !err && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <p className="text-sm text-gray-600">
-            Showing <b>{filtered.length}</b> item(s)
-          </p>
+          <p className="text-sm text-gray-600 md:col-span-2">
+  Showing <b>{filtered.length}</b> item(s)
+</p>
 
           {filtered.map((it) => (
-            <div key={it.id} className="rounded-2xl bg-white p-4 sm:p-5 shadow-sm ring-1 ring-neutral-200">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <div className="font-semibold">{it.name}</div>
-                  <div className="text-xs text-gray-500">{it.search_text}</div>
-                </div>
+  <div
+    key={it.id}
+    className="rounded-2xl bg-white p-4 sm:p-5 shadow-sm ring-1 ring-neutral-200 transition hover:shadow-md active:scale-[0.99]"
+  >
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      {/* Left: name + tags */}
+      <div className="min-w-0">
+        <div className="font-semibold tracking-tight">{it.name}</div>
+        <div className="text-xs text-gray-500 break-words">{it.search_text}</div>
+      </div>
 
-                <div className="sm:text-right">
-                  <div className="text-xs text-gray-500">Stock</div>
-                  <div className="text-2xl font-semibold">{it.stock_count}</div>
+      {/* Right: stock + actions */}
+      <div className="sm:text-right">
+        <div className="text-xs text-gray-500">Stock</div>
+        <div className="text-2xl font-semibold">{it.stock_count}</div>
 
-                  {adminMode && (
-                    <button
-                      className="mt-2 w-full sm:w-auto rounded-xl border px-4 py-2 text-sm hover:bg-gray-50"
-                      onClick={() => {
-                        setSelectedItem({
-                          id: it.id,
-                          name: it.name,
-                          stock_count: it.stock_count,
-                        });
-                        setModalOpen(true);
-                      }}
-                    >
-                      Update stock
-                    </button>
-                  )}
+        {adminMode && (
+          <button
+            className="mt-2 w-full sm:w-auto rounded-xl border bg-neutral-50 px-4 py-2 text-sm hover:bg-neutral-100"
+            onClick={() => {
+              setSelectedItem({
+                id: it.id,
+                name: it.name,
+                stock_count: it.stock_count,
+              });
+              setModalOpen(true);
+            }}
+          >
+            Update stock
+          </button>
+        )}
 
-                  {adminMode && (
-                    <button
-                      className="mt-2 w-full sm:w-auto rounded-xl border px-4 py-2 text-sm hover:bg-gray-50"
-                      onClick={() => {
-                        setHistoryItem({ id: it.id, name: it.name });
-                        setHistoryOpen(true);
-                      }}
-                    >
-                      View history
-                    </button>
-                  )}
+        {adminMode && (
+          <button
+            className="mt-2 w-full sm:w-auto rounded-xl border px-4 py-2 text-sm hover:bg-gray-50"
+            onClick={() => {
+              setHistoryItem({ id: it.id, name: it.name });
+              setHistoryOpen(true);
+            }}
+          >
+            View history
+          </button>
+        )}
 
-                  {adminMode && (
-                    <button
-                      className="mt-2 w-full sm:w-auto rounded-xl border border-red-300 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                      onClick={() => {
-                        setDeleteItem({ id: it.id, name: it.name });
-                        setDeleteOpen(true);
-                      }}
-                    >
-                      Delete item
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-          ))}
+        {adminMode && (
+          <button
+            className="mt-2 w-full sm:w-auto rounded-xl border border-red-200 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+            onClick={() => {
+              setDeleteItem({ id: it.id, name: it.name });
+              setDeleteOpen(true);
+            }}
+          >
+            Delete item
+          </button>
+        )}
+      </div>
+    </div>
+  </div>
+))}
 
           {filtered.length === 0 && (
             <div className="rounded-xl bg-white p-6 text-center text-gray-600 shadow">

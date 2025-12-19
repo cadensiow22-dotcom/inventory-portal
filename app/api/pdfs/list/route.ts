@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export async function GET() {
   const { data, error } = await supabaseAdmin
     .from("pdf_documents")
@@ -20,4 +24,10 @@ export async function GET() {
     file: "app/api/pdfs/list/route.ts",
     data,
   });
+
+  return NextResponse.json(
+  { signature: "LIST_ROUTE_VERCEL_PROOF_123", file: "app/api/pdfs/list/route.ts", data },
+  { headers: { "Cache-Control": "no-store" } }
+);
+
 }

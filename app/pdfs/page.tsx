@@ -130,12 +130,15 @@ export default function PdfLibraryPage() {
             onChange={(e) => setOwnerPin(e.target.value)}
           />
 
-          <input
+        <label className="block mb-3">
+           <span className="mb-1 block text-sm text-gray-600">PDF file</span>
+           <input
             type="file"
             accept="application/pdf"
-            className="mb-3"
+            className="w-full rounded border p-2"
             onChange={(e) => setFile(e.target.files?.[0] ?? null)}
           />
+         </label>
 
           <button
             disabled={loading}

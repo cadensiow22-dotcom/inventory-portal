@@ -7,7 +7,16 @@ export async function POST(req: Request) {
   const formData = await req.formData();
 
   const file = formData.get("file") as File | null;
-  const title = (formData.get("title") as string | null)?.trim() || "Untitled";
+  const rawTitle = (formData.get("title") as string | null)?.trim();
+
+if (!rawTitle) {
+  return NextResponse.json(
+    { error: "Title is required" },
+    { status: 400 }
+  );
+}
+
+  const title = rawTitle;
   const ownerPin = (formData.get("ownerPin") as string | null)?.trim();
 
   if (!file || !ownerPin) {

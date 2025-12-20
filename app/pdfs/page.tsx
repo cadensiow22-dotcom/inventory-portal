@@ -41,10 +41,16 @@ export default function PdfLibraryPage() {
     e.preventDefault();
     setErr('');
 
-    if (!file || !ownerPin) {
-      setErr('Missing file or owner PIN');
-      return;
-    }
+    if (!title.trim()) {
+  setErr('Title is required');
+  return;
+}
+
+   if (!file || !ownerPin) {
+    setErr('Missing file or owner PIN');
+    return;
+  }
+
 
     setLoading(true);
     const fd = new FormData();
@@ -116,7 +122,7 @@ export default function PdfLibraryPage() {
           <h2 className="font-semibold mb-3">Owner actions</h2>
 
           <input
-            placeholder="Title (optional)"
+            placeholder="Title (required)"
             className="w-full border p-2 mb-2 rounded"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
@@ -141,7 +147,7 @@ export default function PdfLibraryPage() {
          </label>
 
           <button
-            disabled={loading}
+            disabled={loading || !title.trim()}
             className="w-full rounded bg-black py-2 text-white disabled:opacity-50"
           >
             {loading ? 'Uploading…' : 'Upload PDF'}

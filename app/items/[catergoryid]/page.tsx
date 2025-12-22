@@ -531,4 +531,3 @@ useEffect(() => {
   </main>
 );
 }
-

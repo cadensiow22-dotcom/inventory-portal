@@ -1,10 +1,10 @@
 'use client';
 
-import ChangePinModal from "../components/ChangePinModal";
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { supabase } from '../lib/supabase';
 import ManageNamesModal from "../components/ManageNamesModal";
+import ViewUidsModal from "../components/ViewUidsModal";
 
 type Category = {
   id: string;
@@ -15,8 +15,8 @@ export default function Page() {
   const [cats, setCats] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
-  const [openChangePin, setOpenChangePin] = useState(false);
   const [openManageNames, setOpenManageNames] = useState(false);
+  const [openViewUids, setOpenViewUids] = useState(false);
 
   useEffect(() => {
     const run = async () => {
@@ -81,12 +81,13 @@ export default function Page() {
 </div>
 
 <div className="mt-6 flex flex-col items-center gap-3">
-  <button
-    className="border px-4 py-2 rounded bg-white shadow hover:shadow-md transition"
-    onClick={() => setOpenChangePin(true)}
-  >
-    Change Session PIN
-  </button>
+<button
+  className="border px-4 py-2 rounded bg-white shadow hover:shadow-md transition"
+  onClick={() => setOpenViewUids(true)}
+>
+  View UIDs
+</button>
+
 
   <button
     className="border px-4 py-2 rounded bg-white shadow hover:shadow-md transition"
@@ -96,9 +97,9 @@ export default function Page() {
   </button>
 </div>
 
-<ChangePinModal
-  open={openChangePin}
-  onClose={() => setOpenChangePin(false)}
+<ViewUidsModal
+  open={openViewUids}
+  onClose={() => setOpenViewUids(false)}
 />
 
 <ManageNamesModal

@@ -57,7 +57,7 @@ export default function UpdateStockModal({
     if (!Number.isFinite(n) || n < 0 || !Number.isInteger(n)) return false;
     if (changedByName.trim().length < 2) return false;
     if (!changedByDate) return false;
-    if (!/^\d{4}$/.test(pin)) return false;
+    if (!/^\d{4,8}$/.test(pin)) return false;
     return true;
   }, [item, newStock, changedByName, changedByDate, pin]);
 
@@ -147,7 +147,11 @@ export default function UpdateStockModal({
           </div>
 
           <div>
-            <NameDropdown value={changedByName} onChange={setChangedByName} />
+          <NameDropdown
+  value={changedByName}
+  onChange={setChangedByName}
+  onlyRole="fulltimer"
+/>
           </div>
 
           <div>
@@ -161,14 +165,14 @@ export default function UpdateStockModal({
           </div>
 
           <div>
-            <label className="block text-sm font-medium">4-digit PIN</label>
+            <label className="block text-sm font-medium">Owner's PIN</label>
             <input
               inputMode="numeric"
               pattern="\d*"
-              maxLength={4}
+              maxLength={8}
+              onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 8))}
               className="mt-1 w-full rounded-lg border px-3 py-2"
               value={pin}
-              onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
               placeholder="••••"
             />
           </div>
@@ -197,7 +201,7 @@ export default function UpdateStockModal({
             <button
               type="button"
               className="pointer-events-auto relative z-50 mt-3 w-full rounded-lg border border-red-300 bg-white px-3 py-2 text-sm text-red-700 hover:bg-red-50 disabled:opacity-50"
-              disabled={loading || changedByName.trim().length < 2 || !/^\d{4}$/.test(pin)}
+              disabled={loading || changedByName.trim().length < 2 || !/^\d{4,8}$/.test(pin)}
               onClick={async (e) => {
                 e.preventDefault();
                 e.stopPropagation();

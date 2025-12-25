@@ -10,6 +10,7 @@ import ItemHistoryModal from '../../../components/ItemHistoryModal';
 import DeleteItemModal from '../../../components/DeleteItemModal';
 import LinkBarcodeModal from '../../../components/LinkBarcodeModal';
 import MobileBarcodeScanner from '../../../components/MobileBarcodeScanner';
+import PublicUpdateModal from '../../../components/PublicUpdateModal';
 
 type Item = {
   id: string;
@@ -42,6 +43,8 @@ export default function ItemsPage() {
   const normalizeBarcode = (s: string) =>
   (s || "").replace(/\s+/g, "").trim();
   const [addPrefillBarcode, setAddPrefillBarcode] = useState("");
+  const [publicUpdateOpen, setPublicUpdateOpen] = useState(false);
+  const [publicUpdateItem, setPublicUpdateItem] = useState<{ id: string; name: string; stock_count: number } | null>(null);
 
   // --- Barcode/QR (additive) ---
   const [barcode, setBarcode] = useState("");
@@ -99,11 +102,15 @@ useEffect(() => {
     setQ(found.name);
 
     if (adminMode) {
-      setLastScannedBarcode(code);
-      setOpenedFromBarcode(true);
-      setSelectedItem(found);
-      setModalOpen(true);
-    }
+  setLastScannedBarcode(code);
+  setOpenedFromBarcode(true);
+  setSelectedItem(found);
+  setModalOpen(true);
+} else {
+  // ✅ Admin OFF: open subtract-only update flow
+  setPublicUpdateItem(found);
+  setPublicUpdateOpen(true);
+}
   } catch (e: any) {
     setBarcodeErr(e?.message ?? "Barcode lookup failed.");
   } finally {
@@ -354,6 +361,22 @@ useEffect(() => {
           </button>
         )}
 
+{!adminMode && (
+  <button
+    className="mt-2 w-full sm:w-auto rounded-xl border bg-neutral-50 px-4 py-2 text-sm hover:bg-neutral-100"
+    onClick={() => {
+      setPublicUpdateItem({
+        id: it.id,
+        name: it.name,
+        stock_count: it.stock_count,
+      });
+      setPublicUpdateOpen(true);
+    }}
+  >
+    Update
+  </button>
+)}
+
         {adminMode && (
           <button
             className="mt-2 w-full sm:w-auto rounded-xl border px-4 py-2 text-sm hover:bg-gray-50"
@@ -525,6 +548,24 @@ useEffect(() => {
         }}
       />
 
+          <PublicUpdateModal
+  open={publicUpdateOpen}
+  onClose={() => setPublicUpdateOpen(false)}
+  item={publicUpdateItem}
+  onSuccess={async () => {
+    if (!categoryId) return;
+
+    const res = await supabase
+      .from("items")
+      .select("id,name,stock_count,search_text")
+      .eq("subcategory_id", categoryId)
+      .eq("is_active", true)
+      .limit(200);
+
+    if (res.error) setErr(res.error.message);
+    setItems(res.data ?? []);
+  }}
+/>
 
 
     </div>

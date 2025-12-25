@@ -92,7 +92,7 @@ export default function DeleteItemModal({
         </div>
 
         <div>
-          <NameDropdown value={byName} onChange={setByName} />
+          <NameDropdown value={byName} onChange={setByName} onlyRole="fulltimer" />
         </div>
 
         <div>
@@ -106,13 +106,18 @@ export default function DeleteItemModal({
         </div>
 
         <div>
-          <label className="block text-sm font-semibold">Admin PIN</label>
-          <input
-            type="password"
-            value={pin}
-            onChange={(e) => setPin(e.target.value)}
-            className="mt-1 w-full rounded-lg border p-2"
-          />
+          <label className="block text-sm font-semibold">Owner's PIN</label>
+<input
+  type="password"
+  inputMode="numeric"
+  pattern="\d*"
+  maxLength={8}
+  value={pin}
+  onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 8))}
+  className="mt-1 w-full rounded-lg border p-2"
+  placeholder="Owner's PIN"
+/>
+
         </div>
       </div>
 

@@ -3,16 +3,26 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 
+type StaffRole = "fulltimer" | "parttimer" | "intern";
+
+type StaffRow = {
+  name: string | null;
+  staff_uid: string | null;
+  staff_role: StaffRole | null;
+};
+
 export default function NameDropdown({
   value,
   onChange,
   label = "Your name",
+  onlyRole,
 }: {
   value: string;
   onChange: (v: string) => void;
   label?: string;
+  onlyRole?: StaffRole;
 }) {
-  const [names, setNames] = useState<string[]>([]);
+  const [names, setNames] = useState<StaffRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
 
@@ -23,11 +33,16 @@ export default function NameDropdown({
       setLoading(true);
       setErr("");
 
-      const { data, error } = await supabase
+      let q = supabase
         .from("staff_names")
-        .select("name")
-        .eq("is_active", true)
-        .order("name", { ascending: true });
+        .select("name, staff_uid, staff_role")
+        .eq("is_active", true);
+
+      if (onlyRole) {
+        q = q.eq("staff_role", onlyRole);
+      }
+
+      const { data, error } = await q.order("name", { ascending: true });
 
       if (!mounted) return;
 
@@ -35,7 +50,7 @@ export default function NameDropdown({
         setErr(error.message);
         setNames([]);
       } else {
-        setNames((data ?? []).map((r: any) => r.name));
+        setNames((data ?? []) as StaffRow[]);
       }
 
       setLoading(false);
@@ -45,7 +60,7 @@ export default function NameDropdown({
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [onlyRole]);
 
   return (
     <div className="w-full">
@@ -60,11 +75,18 @@ export default function NameDropdown({
         <option value="">
           {loading ? "Loading names..." : "Select your name"}
         </option>
-        {names.map((n) => (
-          <option key={n} value={n}>
-            {n}
-          </option>
-        ))}
+
+        {names
+          .filter((r) => r.name)
+          .map((r) => {
+            const n = r.name as string;
+            const uid = r.staff_uid ?? n; // stable key, not displayed
+            return (
+              <option key={`${n}-${uid}`} value={n}>
+                {n}
+              </option>
+            );
+          })}
       </select>
 
       {err ? <p className="mt-1 text-xs text-red-600">{err}</p> : null}

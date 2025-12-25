@@ -68,11 +68,11 @@ export default function AddItemModal({
       setLoading(false);
       return;
     }
-    if (!/^\d{4}$/.test(pin.trim())) {
-      setError("PIN must be exactly 4 digits.");
-      setLoading(false);
-      return;
-    }
+    if (!/^\d{4,8}$/.test(pin.trim())) {
+  setError("Owner's PIN must be 4 to 8 digits.");
+  setLoading(false);
+  return;
+}
     if (!stock.trim() || Number.isNaN(Number(stock))) {
       setError("Initial stock is required.");
       setLoading(false);
@@ -162,7 +162,7 @@ const rpcName = useBarcodeFlow
         />
 
         <div className="pt-1">
-          <NameDropdown value={byName} onChange={setByName} />
+          <NameDropdown value={byName} onChange={setByName} onlyRole="fulltimer" />
         </div>
 
         <input
@@ -173,11 +173,11 @@ const rpcName = useBarcodeFlow
         />
 
         <input
-          placeholder="4-digit PIN"
-          className="w-full border rounded-lg p-2"
-          value={pin}
-          onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
-        />
+  placeholder="Owner's PIN"
+  className="w-full border rounded-lg p-2"
+  value={pin}
+  onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 8))}
+/>
       </div>
 
       {/* Footer (sticky buttons) */}

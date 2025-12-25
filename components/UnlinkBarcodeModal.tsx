@@ -29,7 +29,7 @@ export default function UnlinkBarcodeModal({ open, onClose, barcodeText, onUnlin
     if (!barcodeText.trim()) return false;
     if (changedByName.trim().length < 2) return false;
     if (!changedByDate) return false;
-    if (!/^\d{4}$/.test(pin)) return false;
+    if (!/^\d{4,8}$/.test(pin)) return false;
     return true;
   }, [barcodeText, changedByName, changedByDate, pin]);
 
@@ -74,7 +74,7 @@ export default function UnlinkBarcodeModal({ open, onClose, barcodeText, onUnlin
         ) : null}
 
         <div className="mt-3 space-y-3">
-          <NameDropdown value={changedByName} onChange={setChangedByName} />
+         <NameDropdown value={changedByName} onChange={setChangedByName} onlyRole="fulltimer" />
 
           <div>
             <label className="block text-sm font-medium">Date</label>
@@ -87,14 +87,14 @@ export default function UnlinkBarcodeModal({ open, onClose, barcodeText, onUnlin
           </div>
 
           <div>
-            <label className="block text-sm font-medium">4-digit PIN</label>
+            <label className="block text-sm font-medium">Owner's Pin</label>
             <input
               inputMode="numeric"
               pattern="\d*"
-              maxLength={4}
+              maxLength={8}
               className="mt-1 w-full rounded-lg border px-3 py-2"
               value={pin}
-              onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
+              onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 8))}
               placeholder="••••"
             />
           </div>

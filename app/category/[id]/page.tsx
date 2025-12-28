@@ -57,31 +57,32 @@ export default function CategoryPage() {
   return (
     <main className="min-h-screen bg-gray-100 p-6">
       <div className="mx-auto max-w-3xl">
-        <div className="mb-6 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <Link href="/" className="text-blue-600 hover:underline">
-              ← Back
-            </Link>
-            <h1 className="text-3xl font-bold">{title || "Category"}</h1>
-          </div>
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+  {/* Left: Back + Title */}
+  <div className="flex items-center gap-3">
+    <Link href="/" className="text-blue-600 hover:underline">
+      ← Back
+    </Link>
+    <h1 className="text-3xl font-bold">{title || "Category"}</h1>
+  </div>
 
-          <div className="flex items-center gap-2">
-  <button
-    className="rounded-lg border px-3 py-2 text-sm hover:bg-gray-50"
-    onClick={() => setOpenManageSubcats(true)}
-  >
-    Manage Subcategories
-  </button>
+  {/* Right: Buttons (stack on mobile, row on desktop) */}
+  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
+    <button
+      className="w-full sm:w-auto rounded-lg border px-3 py-2 text-sm hover:bg-gray-50"
+      onClick={() => setOpenManageSubcats(true)}
+    >
+      Manage Subcategories
+    </button>
 
-  <button
-    className="rounded-lg border px-3 py-2 text-sm hover:bg-gray-50"
-    onClick={() => setOpenManageQuotas(true)}
-  >
-    Manage Quotas
-  </button>
+    <button
+      className="w-full sm:w-auto rounded-lg border px-3 py-2 text-sm hover:bg-gray-50"
+      onClick={() => setOpenManageQuotas(true)}
+    >
+      Manage Quotas
+    </button>
+  </div>
 </div>
-
-        </div>
 
         <ManageSubcategoriesModal
           open={openManageSubcats}

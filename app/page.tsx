@@ -80,6 +80,19 @@ export default function Page() {
   </Link>
 </div>
 
+<div className="mt-6">
+  <Link
+    href="/to-order"
+    className="block rounded-xl bg-white p-6 shadow hover:shadow-lg transition text-center"
+  >
+    <h2 className="text-xl font-semibold">🛒 To Order</h2>
+    <p className="mt-1 text-sm text-gray-500">
+      Items below quota (ignores disabled / unset quotas)
+    </p>
+  </Link>
+</div>
+
+
 <div className="mt-6 flex flex-col items-center gap-3">
 <button
   className="border px-4 py-2 rounded bg-white shadow hover:shadow-md transition"

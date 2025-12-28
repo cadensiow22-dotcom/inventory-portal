@@ -17,6 +17,8 @@ type Item = {
   name: string;
   stock_count: number;
   search_text: string | null;
+  quota: number | null;
+  quota_disabled: boolean;
 };
 
 export default function ItemsPage() {
@@ -144,7 +146,7 @@ useEffect(() => {
 
     const res = await supabase
   .from('items')
-  .select('id,name,stock_count,search_text')
+  .select('id,name,stock_count,search_text,quota,quota_disabled')
   .eq('subcategory_id', categoryId)
   .eq('is_active', true)
   .limit(200);
@@ -343,7 +345,18 @@ useEffect(() => {
       {/* Right: stock + actions */}
       <div className="sm:text-right">
         <div className="text-xs text-gray-500">Stock</div>
-        <div className="text-2xl font-semibold">{it.stock_count}</div>
+        {(() => {
+  const belowQuota =
+    it.quota !== null &&
+    it.quota_disabled === false &&
+    it.stock_count < it.quota;
+
+  return (
+    <div className={`text-2xl font-semibold ${belowQuota ? "text-red-600" : ""}`}>
+      {it.stock_count}
+    </div>
+  );
+})()}
 
         {adminMode && (
           <button
@@ -444,7 +457,7 @@ useEffect(() => {
 
     const res = await supabase
       .from("items")
-      .select("id,name,stock_count,search_text")
+      .select('id,name,stock_count,search_text,quota,quota_disabled')
       .eq("subcategory_id", categoryId)
       .eq("is_active", true)
       .limit(200);
@@ -470,7 +483,7 @@ useEffect(() => {
 
   const res = await supabase
     .from("items")
-    .select("id,name,stock_count,search_text")
+    .select('id,name,stock_count,search_text,quota,quota_disabled')
     .eq("subcategory_id", categoryId)
     .eq("is_active", true)
     .limit(200);
@@ -539,7 +552,7 @@ useEffect(() => {
 
           const res = await supabase
             .from("items")
-            .select("id,name,stock_count,search_text")
+            .select('id,name,stock_count,search_text,quota,quota_disabled')
             .eq("subcategory_id", categoryId)
             .eq("is_active", true)
             .limit(200);
@@ -557,7 +570,7 @@ useEffect(() => {
 
     const res = await supabase
       .from("items")
-      .select("id,name,stock_count,search_text")
+      .select('id,name,stock_count,search_text,quota,quota_disabled')
       .eq("subcategory_id", categoryId)
       .eq("is_active", true)
       .limit(200);

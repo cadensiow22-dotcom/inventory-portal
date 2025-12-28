@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "../../../lib/supabase";
 import ManageSubcategoriesModal from "../../../components/ManageSubcategoriesModal";
+import ManageQuotasModal from "../../../components/ManageQuotasModal";
 
 type Category = {
   id: string;
@@ -20,6 +21,7 @@ export default function CategoryPage() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [openManageSubcats, setOpenManageSubcats] = useState(false);
+  const [openManageQuotas, setOpenManageQuotas] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -63,12 +65,22 @@ export default function CategoryPage() {
             <h1 className="text-3xl font-bold">{title || "Category"}</h1>
           </div>
 
-          <button
-            className="rounded-lg border px-3 py-2 text-sm hover:bg-gray-50"
-            onClick={() => setOpenManageSubcats(true)}
-          >
-            Manage Subcategories
-          </button>
+          <div className="flex items-center gap-2">
+  <button
+    className="rounded-lg border px-3 py-2 text-sm hover:bg-gray-50"
+    onClick={() => setOpenManageSubcats(true)}
+  >
+    Manage Subcategories
+  </button>
+
+  <button
+    className="rounded-lg border px-3 py-2 text-sm hover:bg-gray-50"
+    onClick={() => setOpenManageQuotas(true)}
+  >
+    Manage Quotas
+  </button>
+</div>
+
         </div>
 
         <ManageSubcategoriesModal
@@ -77,6 +89,13 @@ export default function CategoryPage() {
           parentCategoryId={id ?? ""}
           parentCategoryName={title}
         />
+        <ManageQuotasModal
+  open={openManageQuotas}
+  onClose={() => setOpenManageQuotas(false)}
+  parentCategoryId={id ?? ""}
+  parentCategoryName={title}
+/>
+
 
         {loading && <p>Loading...</p>}
 

@@ -276,7 +276,7 @@ export default function ManageQuotasModal({
 
         {/* 5) Add quotas */}
         <div className="mt-3 rounded-lg border p-3">
-          <div className="text-sm font-semibold mb-1">5) Add quotas</div>
+          <div className="text-sm font-semibold mb-1">5) Set New Quotas</div>
           <input
             value={quota}
             onChange={(e) => setQuota(e.target.value.replace(/[^\d]/g, ""))}

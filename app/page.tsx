@@ -92,6 +92,18 @@ export default function Page() {
   </Link>
 </div>
 
+<div className="mt-6">
+  <Link
+    href="/stock-take"
+    className="block rounded-xl bg-white p-6 shadow hover:shadow-lg transition text-center"
+  >
+    <h2 className="text-xl font-semibold">📋 Stock Take</h2>
+    <p className="mt-1 text-sm text-gray-500">
+      Select a subcategory and see stock + quota for all items
+    </p>
+  </Link>
+</div>
+
 
 <div className="mt-6 flex flex-col items-center gap-3">
 <button

@@ -15,6 +15,8 @@ type Row = {
 
   parent_category_id: string;
   parent_category_name: string;
+
+  order_date: string; // YYYY-MM-DD
 };
 
 export default function ToOrderPage() {
@@ -22,16 +24,19 @@ export default function ToOrderPage() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [q, setQ] = useState("");
+  const [clearing, setClearing] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
 
+  // Load queue
   useEffect(() => {
     const load = async () => {
       setLoading(true);
       setErr(null);
 
       const { data, error } = await supabase
-        .from("to_order_items")
+        .from("to_order_queue")
         .select(
-          "item_id,item_name,stock_count,quota,subcategory_id,subcategory_name,parent_category_id,parent_category_name"
+          "item_id,item_name,stock_count,quota,subcategory_id,subcategory_name,parent_category_id,parent_category_name,order_date"
         )
         .order("parent_category_name", { ascending: true })
         .order("subcategory_name", { ascending: true })
@@ -44,6 +49,12 @@ export default function ToOrderPage() {
 
     load();
   }, []);
+
+  // Read-only order date derived from DB rows
+  const orderDate = useMemo(() => {
+    if (rows.length === 0) return null;
+    return rows.map((r) => r.order_date).sort().at(-1) ?? null;
+  }, [rows]);
 
   const filtered = useMemo(() => {
     const t = q.trim().toLowerCase();
@@ -66,6 +77,7 @@ export default function ToOrderPage() {
   return (
     <main className="min-h-screen bg-gray-100 p-6">
       <div className="mx-auto max-w-4xl">
+        {/* Header */}
         <div className="mb-4 flex items-center justify-between gap-3">
           <Link href="/" className="text-blue-600 hover:underline">
             ← Home
@@ -73,6 +85,55 @@ export default function ToOrderPage() {
           <h1 className="text-2xl font-bold">To Order</h1>
         </div>
 
+        {/* Order Date + Reset (PIN required via API) */}
+        <div className="mb-4 rounded-xl bg-white p-4 shadow flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="text-sm text-gray-600">
+            Order Date:{" "}
+            <span className="font-semibold">
+              {orderDate ?? "— (Add from Stock Take)"}
+            </span>
+          </div>
+
+          <button
+            disabled={clearing}
+            onClick={async () => {
+              const ownerPin = prompt("Enter Owner PIN to reset To Order list:");
+              if (!ownerPin) return;
+
+              const ok = confirm(
+                "Are you sure you want to clear the entire To Order list?"
+              );
+              if (!ok) return;
+
+              setClearing(true);
+              setErr(null);
+              setMsg(null);
+
+              const res = await fetch("/api/to-order/reset", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ ownerPin }),
+              });
+
+              const json = await res.json();
+
+              if (!res.ok) {
+                setErr(json?.error ?? "Failed to reset To Order");
+                setClearing(false);
+                return;
+              }
+
+              setRows([]);
+              setMsg("To Order list cleared.");
+              setClearing(false);
+            }}
+            className="rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-100 disabled:opacity-50"
+          >
+            🧹 Reset To Order
+          </button>
+        </div>
+
+        {/* Search */}
         <div className="rounded-xl bg-white p-4 shadow">
           <label className="text-sm font-semibold">Search</label>
           <input
@@ -89,6 +150,12 @@ export default function ToOrderPage() {
           <div className="mt-4 rounded-xl bg-white p-4 shadow">
             <p className="font-semibold text-red-600">Error</p>
             <p className="text-sm text-gray-700 mt-1">{err}</p>
+          </div>
+        )}
+
+        {msg && (
+          <div className="mt-4 rounded-xl bg-white p-4 shadow">
+            <p className="font-semibold text-green-700">{msg}</p>
           </div>
         )}
 

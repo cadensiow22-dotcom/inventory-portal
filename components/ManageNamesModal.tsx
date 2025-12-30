@@ -135,7 +135,7 @@ export default function ManageNamesModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
       <button className="absolute inset-0 bg-black/60" onClick={onClose} />
 
-      <div className="relative w-full max-w-md rounded-xl bg-white p-4 shadow-lg">
+      <div className="relative w-full max-w-md rounded-xl bg-white p-4 shadow-lg max-h-[80vh] overflow-y-auto">
         <div className="mb-3 flex items-center justify-between gap-2">
           <h2 className="text-lg font-bold">Manage Names</h2>
           <button className="rounded-lg border px-3 py-1" onClick={onClose}>

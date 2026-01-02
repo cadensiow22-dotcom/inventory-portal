@@ -198,44 +198,27 @@ export default function UpdateStockModal({
               {barcodeText}
             </div>
 
-            <button
-              type="button"
-              className="pointer-events-auto relative z-50 mt-3 w-full rounded-lg border border-red-300 bg-white px-3 py-2 text-sm text-red-700 hover:bg-red-50 disabled:opacity-50"
-              disabled={loading || changedByName.trim().length < 2 || !/^\d{4,8}$/.test(pin)}
-              onClick={async (e) => {
-                e.preventDefault();
-                e.stopPropagation();
+           <button
+  type="button"
+  className="pointer-events-auto relative z-50 mt-3 w-full rounded-lg border border-red-300 bg-white px-3 py-2 text-sm text-red-700 hover:bg-red-50 disabled:opacity-50"
+  disabled={loading || changedByName.trim().length < 2}
+  onClick={(e) => {
+    e.preventDefault();
+    e.stopPropagation();
 
-                const ok = confirm(`Unlink barcode ${barcodeText} from this item?`);
-                if (!ok) return;
+    const ok = confirm(`Unlink barcode ${barcodeText} from this item?`);
+    if (!ok) return;
 
-                setErrorMsg("");
-                setLoading(true);
-                try {
-                  const { error } = await supabase.rpc("unlink_barcode_from_item_with_pin", {
-                    p_barcode_text: barcodeText.trim(),
-                    p_item_id: item.id,
-                    p_changed_by_name: changedByName.trim(),
-                    p_changed_by_date: changedByDate,
-                    p_pin: pin,
-                  });
+    // ✅ Don't unlink here (owner pin stays for stock update)
+    // ✅ Tell ItemsPage to open UnlinkBarcodeModal (admin pin)
+    onUnlinked?.();
 
-                  if (error) {
-                    setErrorMsg(error.message);
-                    return;
-                  }
-
-                  onUnlinked?.();
-                  onClose();
-                } catch (e: any) {
-                  setErrorMsg(e?.message ?? "Unlink failed");
-                } finally {
-                  setLoading(false);
-                }
-              }}
-            >
-              Unlink this barcode
-            </button>
+    // optional: close this modal so user focuses on unlink modal
+    onClose();
+  }}
+>
+  Unlink this barcode
+</button>
           </div>
         ) : null}
       </div>

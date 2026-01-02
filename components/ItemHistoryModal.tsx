@@ -44,7 +44,7 @@ export default function ItemHistoryModal({
         )
         .eq("item_id", itemId)
         .order("changed_at", { ascending: false })
-        .limit(20);
+        .limit(40);
 
       if (error) setErr(error.message);
       setLogs(data ?? []);
@@ -146,7 +146,7 @@ export default function ItemHistoryModal({
 
       {/* Footer (optional small hint) */}
       <div className="border-t border-neutral-200 px-4 py-2 text-xs text-gray-500">
-        Showing latest 20 logs
+        Showing latest 40 logs
       </div>
     </div>
   </div>

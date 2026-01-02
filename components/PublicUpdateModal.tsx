@@ -27,6 +27,9 @@ export default function PublicUpdateModal({
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
 
+  // ✅ LIMIT: max amount a public user can subtract per update
+  const MAX_PUBLIC_DEDUCT = 20;
+
   const [updateDate, setUpdateDate] = useState(() => {
     const d = new Date();
     const yyyy = d.getFullYear();
@@ -57,33 +60,30 @@ export default function PublicUpdateModal({
   async function submit() {
     setErr("");
 
-    const currentItem = item; // make TS happy
-    if (!currentItem) {
-      return setErr("No item selected.");
-    }
-
-    setLoading(true);
+    const currentItem = item;
+    if (!currentItem) return setErr("No item selected.");
 
     const name = changedByName.trim();
     const staffUid = uid.trim();
     const qtyUsed = Number(qty);
 
-    if (!name) {
-      setLoading(false);
-      return setErr("Name is required.");
+    // ✅ VALIDATION (before calling database)
+    if (!name) return setErr("Name is required.");
+    if (!staffUid) return setErr("UID is required.");
+    if (!Number.isFinite(qtyUsed) || qtyUsed <= 0) return setErr("Quantity must be more than 0.");
+    if (!updateDate) return setErr("Date is required.");
+
+    // ✅ LIMIT CHECK
+    if (qtyUsed > MAX_PUBLIC_DEDUCT) {
+      return setErr(`You can only subtract up to ${MAX_PUBLIC_DEDUCT} at a time.`);
     }
-    if (!staffUid) {
-      setLoading(false);
-      return setErr("UID is required.");
+
+    // ✅ DO NOT ALLOW NEGATIVE STOCK
+    if (qtyUsed > currentItem.stock_count) {
+      return setErr(`You cannot subtract ${qtyUsed}. Only ${currentItem.stock_count} in stock.`);
     }
-    if (!Number.isFinite(qtyUsed) || qtyUsed <= 0) {
-      setLoading(false);
-      return setErr("Quantity must be more than 0.");
-    }
-    if (!updateDate) {
-      setLoading(false);
-      return setErr("Date is required.");
-    }
+
+    setLoading(true);
 
     const { error } = await supabase.rpc("consume_stock_with_uid", {
       p_item_id: currentItem.id,
@@ -119,18 +119,15 @@ export default function PublicUpdateModal({
         <div className="rounded-lg border p-3 text-sm">
           <div className="font-semibold">{item.name}</div>
           <div className="text-gray-600">
-            Current stock:{" "}
-            <span className="font-semibold">{item.stock_count}</span>
+            Current stock: <span className="font-semibold">{item.stock_count}</span>
+          </div>
+          <div className="text-gray-600">
+            Max subtract per update: <span className="font-semibold">{MAX_PUBLIC_DEDUCT}</span>
           </div>
         </div>
 
         <div className="mt-3 space-y-3">
-          {/* Admin OFF: allow ALL roles */}
-          <NameDropdown
-            value={changedByName}
-            onChange={setChangedByName}
-            label="Your name"
-          />
+          <NameDropdown value={changedByName} onChange={setChangedByName} label="Your name" />
 
           <div>
             <label className="block text-sm font-semibold">UID</label>
@@ -144,21 +141,18 @@ export default function PublicUpdateModal({
           </div>
 
           <div>
-            <label className="block text-sm font-semibold">
-              Quantity (to subtract)
-            </label>
+            <label className="block text-sm font-semibold">Quantity (to subtract)</label>
             <input
               inputMode="numeric"
               pattern="\d*"
               value={qty}
               onChange={(e) => setQty(e.target.value.replace(/\D/g, ""))}
               className="mt-1 w-full rounded-lg border p-2"
-              placeholder="e.g. 10"
+              placeholder={`e.g. 10 (max ${MAX_PUBLIC_DEDUCT})`}
               autoComplete="off"
             />
           </div>
 
-          {/* NEW: Date input */}
           <div>
             <label className="block text-sm font-semibold">Date</label>
             <input
@@ -180,8 +174,7 @@ export default function PublicUpdateModal({
           </button>
 
           <p className="text-xs text-gray-500">
-            This will subtract from stock. No adding, deleting, linking or
-            unlinking is allowed in Admin OFF.
+            This will subtract from stock. No adding, deleting, linking or unlinking is allowed in Admin OFF.
           </p>
         </div>
       </div>

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
 import NameDropdown from "./NameDropdown";
+import { verifyAdminPin } from "@/lib/adminPin";
 
 type Props = {
   open: boolean;
@@ -11,16 +12,23 @@ type Props = {
   onUnlinked: () => void;
 };
 
-export default function UnlinkBarcodeModal({ open, onClose, barcodeText, onUnlinked }: Props) {
+export default function UnlinkBarcodeModal({
+  open,
+  onClose,
+  barcodeText,
+  onUnlinked,
+}: Props) {
   const [changedByName, setChangedByName] = useState("");
-  const [changedByDate, setChangedByDate] = useState(() => new Date().toISOString().slice(0, 10));
-  const [pin, setPin] = useState("");
+  const [changedByDate, setChangedByDate] = useState(() =>
+    new Date().toISOString().slice(0, 10)
+  );
+  const [adminPin, setAdminPin] = useState("");
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
   useEffect(() => {
     if (open) {
-      setPin("");
+      setAdminPin("");
       setErrorMsg("");
     }
   }, [open]);
@@ -29,19 +37,34 @@ export default function UnlinkBarcodeModal({ open, onClose, barcodeText, onUnlin
     if (!barcodeText.trim()) return false;
     if (changedByName.trim().length < 2) return false;
     if (!changedByDate) return false;
-    if (!/^\d{4,8}$/.test(pin)) return false;
+    if (!/^\d{6}$/.test(adminPin.trim())) return false; // ✅ admin pin
     return true;
-  }, [barcodeText, changedByName, changedByDate, pin]);
+  }, [barcodeText, changedByName, changedByDate, adminPin]);
 
   async function handleUnlink() {
     setErrorMsg("");
+
+    if (!/^\d{6}$/.test(adminPin.trim())) {
+      setErrorMsg("Admin PIN must be exactly 6 digits.");
+      return;
+    }
+
     setLoading(true);
+
+    // ✅ quick client-side check (server will still enforce)
+    const ok = await verifyAdminPin(adminPin.trim());
+    if (!ok) {
+      setErrorMsg("Invalid admin PIN.");
+      setLoading(false);
+      return;
+    }
+
     try {
       const { error } = await supabase.rpc("unlink_barcode_from_item_with_pin", {
         p_barcode_text: barcodeText.trim(),
         p_changed_by_name: changedByName.trim(),
         p_changed_by_date: changedByDate,
-        p_pin: pin,
+        p_pin: adminPin.trim(), // ✅ admin pin
       });
 
       if (error) {
@@ -62,7 +85,12 @@ export default function UnlinkBarcodeModal({ open, onClose, barcodeText, onUnlin
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-      <button className="absolute inset-0 bg-black/60" onClick={onClose} aria-label="Close modal backdrop" />
+      <button
+        className="absolute inset-0 bg-black/60"
+        onClick={onClose}
+        aria-label="Close modal backdrop"
+      />
+
       <div className="relative w-full max-w-md rounded-xl bg-white p-4 shadow-lg">
         <h2 className="text-lg font-semibold">Unlink barcode</h2>
         <p className="mt-1 text-sm text-gray-600 break-all">
@@ -70,11 +98,13 @@ export default function UnlinkBarcodeModal({ open, onClose, barcodeText, onUnlin
         </p>
 
         {errorMsg ? (
-          <div className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-700">{errorMsg}</div>
+          <div className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-700">
+            {errorMsg}
+          </div>
         ) : null}
 
         <div className="mt-3 space-y-3">
-         <NameDropdown value={changedByName} onChange={setChangedByName} onlyRole="fulltimer" />
+          <NameDropdown value={changedByName} onChange={setChangedByName} onlyRole="fulltimer" />
 
           <div>
             <label className="block text-sm font-medium">Date</label>
@@ -87,23 +117,31 @@ export default function UnlinkBarcodeModal({ open, onClose, barcodeText, onUnlin
           </div>
 
           <div>
-            <label className="block text-sm font-medium">Owner's Pin</label>
+            <label className="block text-sm font-medium">Admin PIN (6 digits)</label>
             <input
+              type="password"
               inputMode="numeric"
               pattern="\d*"
-              maxLength={8}
+              maxLength={6}
               className="mt-1 w-full rounded-lg border px-3 py-2"
-              value={pin}
-              onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 8))}
-              placeholder="••••"
+              value={adminPin}
+              onChange={(e) =>
+                setAdminPin(e.target.value.replace(/\D/g, "").slice(0, 6))
+              }
+              placeholder="••••••"
             />
           </div>
         </div>
 
         <div className="mt-4 flex gap-2">
-          <button className="w-1/2 rounded-lg border px-3 py-2" onClick={onClose} disabled={loading}>
+          <button
+            className="w-1/2 rounded-lg border px-3 py-2"
+            onClick={onClose}
+            disabled={loading}
+          >
             Cancel
           </button>
+
           <button
             className="w-1/2 rounded-lg bg-red-600 px-3 py-2 text-white disabled:opacity-50"
             onClick={handleUnlink}
@@ -116,4 +154,3 @@ export default function UnlinkBarcodeModal({ open, onClose, barcodeText, onUnlin
     </div>
   );
 }
-

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { verifyAdminPin } from "@/lib/adminPin";
 
 type Subcat = { id: string; name: string };
 type ItemRow = {
@@ -23,15 +24,20 @@ export default function ManageQuotasModal({
   parentCategoryId: string;
   parentCategoryName?: string;
 }) {
-  const [ownerPin, setOwnerPin] = useState("");
+  const [adminPin, setAdminPin] = useState("");
+
   const [subcats, setSubcats] = useState<Subcat[]>([]);
   const [subcatId, setSubcatId] = useState("");
+
   const [items, setItems] = useState<ItemRow[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
   const [disableQuota, setDisableQuota] = useState(false);
   const [quota, setQuota] = useState("");
+
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
+
   const [itemSearch, setItemSearch] = useState("");
 
   const filteredItems = useMemo(() => {
@@ -78,7 +84,7 @@ export default function ManageQuotasModal({
 
     // reset on open
     setErr("");
-    setOwnerPin("");
+    setAdminPin("");
     setSubcatId("");
     setItems([]);
     setSelectedIds([]);
@@ -109,30 +115,37 @@ export default function ManageQuotasModal({
   }
 
   function selectAllFiltered() {
-    const ids = filteredItems.map((i) => i.id);
-    setSelectedIds(ids);
+    setSelectedIds(filteredItems.map((i) => i.id));
   }
 
   async function apply() {
     setErr("");
-    const p = ownerPin.trim();
 
-    if (!/^\d{4,8}$/.test(p)) return setErr("Owner PIN must be 4 to 8 digits.");
+    const p = adminPin.trim();
+    if (!/^\d{6}$/.test(p)) return setErr("Admin PIN must be exactly 6 digits.");
     if (!subcatId) return setErr("Select a subcategory first.");
     if (selectedIds.length === 0) return setErr("Select at least 1 item.");
 
     if (!disableQuota) {
       const q = Number(quota);
-      if (!Number.isFinite(q) || q <= 0) return setErr("Add quota must be a positive number.");
+      if (!Number.isFinite(q) || q <= 0) return setErr("New quota must be a positive number.");
     }
 
     setLoading(true);
     try {
+      // ✅ client-side admin pin check (matches your other admin-only components)
+      const ok = await verifyAdminPin(p);
+      if (!ok) {
+        setErr("Invalid admin PIN.");
+        setLoading(false);
+        return;
+      }
+
       const res = await fetch("/api/quotas/bulk-update", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ownerPin: p,
+          adminPin: p,
           itemIds: selectedIds,
           disable: disableQuota,
           quota: disableQuota ? null : Number(quota),
@@ -146,6 +159,7 @@ export default function ManageQuotasModal({
       setSelectedIds([]);
       setQuota("");
       setDisableQuota(false);
+      setAdminPin("");
     } catch (e: any) {
       setErr(e?.message ?? "Failed");
     } finally {
@@ -214,8 +228,7 @@ export default function ManageQuotasModal({
             ) : (
               filteredItems.map((it) => {
                 const checked = selectedIds.includes(it.id);
-                const quotaLabel =
-                  it.quota == null ? "No quota" : `Quota: ${it.quota}`;
+                const quotaLabel = it.quota == null ? "None" : String(it.quota);
                 const disabledLabel = it.quota_disabled ? " (Disabled)" : "";
                 return (
                   <label
@@ -231,7 +244,7 @@ export default function ManageQuotasModal({
                       <div>
                         <div className="text-sm font-medium">{it.name}</div>
                         <div className="text-xs text-gray-600">
-                          Stock: {it.stock_count} • {quotaLabel}
+                          Stock: {it.stock_count} • Quota: {quotaLabel}
                           <span className="text-gray-500">{disabledLabel}</span>
                         </div>
                       </div>
@@ -247,23 +260,9 @@ export default function ManageQuotasModal({
           </div>
         </div>
 
-        {/* 3) Owner pin */}
+        {/* 3) Disable quota */}
         <div className="mt-3 rounded-lg border p-3">
-          <div className="text-sm font-semibold mb-1">3) Owner PIN</div>
-          <input
-            type="password"
-            inputMode="numeric"
-            value={ownerPin}
-            onChange={(e) => setOwnerPin(e.target.value.replace(/\D/g, "").slice(0, 8))}
-            className="w-full rounded-lg border p-2"
-            placeholder="Owner PIN"
-            autoComplete="off"
-          />
-        </div>
-
-        {/* 4) Disable quota */}
-        <div className="mt-3 rounded-lg border p-3">
-          <div className="text-sm font-semibold mb-2">4) Disable quota (for selected items)</div>
+          <div className="text-sm font-semibold mb-2">3) Disable quota (selected items)</div>
           <label className="flex items-center gap-2 text-sm">
             <input
               type="checkbox"
@@ -274,9 +273,9 @@ export default function ManageQuotasModal({
           </label>
         </div>
 
-        {/* 5) Add quotas */}
+        {/* 4) Set new quota */}
         <div className="mt-3 rounded-lg border p-3">
-          <div className="text-sm font-semibold mb-1">5) Set New Quotas</div>
+          <div className="text-sm font-semibold mb-1">4) Set new quota</div>
           <input
             value={quota}
             onChange={(e) => setQuota(e.target.value.replace(/[^\d]/g, ""))}
@@ -286,8 +285,22 @@ export default function ManageQuotasModal({
             disabled={disableQuota}
           />
           <p className="mt-2 text-xs text-gray-500">
-            If the item already has a quota, this will overwrite it to match “Add quotas”.
+            This overwrites quota for the selected items (unless you disable quota).
           </p>
+        </div>
+
+        {/* 5) Admin PIN */}
+        <div className="mt-3 rounded-lg border p-3">
+          <div className="text-sm font-semibold mb-1">5) Admin PIN (6 digits)</div>
+          <input
+            type="password"
+            inputMode="numeric"
+            value={adminPin}
+            onChange={(e) => setAdminPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
+            className="w-full rounded-lg border p-2"
+            placeholder="Admin PIN"
+            autoComplete="off"
+          />
         </div>
 
         {err ? <p className="mt-3 text-sm text-red-600">{err}</p> : null}
@@ -297,7 +310,11 @@ export default function ManageQuotasModal({
           onClick={apply}
           className="mt-4 w-full rounded-lg bg-black px-3 py-2 text-white disabled:opacity-50"
         >
-          {loading ? "Applying..." : disableQuota ? "Disable quota for selected" : "Set quota for selected"}
+          {loading
+            ? "Applying..."
+            : disableQuota
+            ? "Disable quota for selected"
+            : "Set quota for selected"}
         </button>
       </div>
     </div>

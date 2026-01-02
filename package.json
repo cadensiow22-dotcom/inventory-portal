@@ -13,12 +13,14 @@
     "@zxing/browser": "^0.1.5",
     "bcryptjs": "^3.0.3",
     "next": "16.0.10",
+    "pdfkit": "^0.17.2",
     "react": "19.2.1",
     "react-dom": "19.2.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20.19.26",
+    "@types/pdfkit": "^0.17.4",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",

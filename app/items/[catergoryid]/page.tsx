@@ -11,6 +11,7 @@ import DeleteItemModal from '../../../components/DeleteItemModal';
 import LinkBarcodeModal from '../../../components/LinkBarcodeModal';
 import MobileBarcodeScanner from '../../../components/MobileBarcodeScanner';
 import PublicUpdateModal from '../../../components/PublicUpdateModal';
+import UnlinkBarcodeModal from "../../../components/UnlinkBarcodeModal";
 
 type Item = {
   id: string;
@@ -47,6 +48,7 @@ export default function ItemsPage() {
   const [addPrefillBarcode, setAddPrefillBarcode] = useState("");
   const [publicUpdateOpen, setPublicUpdateOpen] = useState(false);
   const [publicUpdateItem, setPublicUpdateItem] = useState<{ id: string; name: string; stock_count: number } | null>(null);
+  const [unlinkOpen, setUnlinkOpen] = useState(false);
 
   // --- Barcode/QR (additive) ---
   const [barcode, setBarcode] = useState("");
@@ -440,14 +442,12 @@ useEffect(() => {
     setLastScannedBarcode("");
   }}
 
-  onUnlinked={() => {
-    // Option A: close modal + reset barcode state
-    setBarcode("");
-    setBarcodeErr(null);
-    setBarcodeNotFound(false);
-    setOpenedFromBarcode(false);
-    setLastScannedBarcode("");
+    onUnlinked={() => {
+    // ✅ DO NOT unlink here (this used to share owner pin)
+    // ✅ Just open the UnlinkBarcodeModal (admin pin modal)
+    setUnlinkOpen(true);
   }}
+
 
   onSuccess={async () => {
     if (!categoryId) return;
@@ -528,6 +528,25 @@ useEffect(() => {
           handleBarcodeLookup(barcode);
         }}
       />
+      <UnlinkBarcodeModal
+  open={unlinkOpen && adminMode}
+  onClose={() => setUnlinkOpen(false)}
+  barcodeText={(lastScannedBarcode || barcode).trim()}
+  onUnlinked={() => {
+    setUnlinkOpen(false);
+
+    // ✅ reset barcode state AFTER successful unlink
+    setBarcode("");
+    setBarcodeErr(null);
+    setBarcodeNotFound(false);
+    setOpenedFromBarcode(false);
+    setLastScannedBarcode("");
+
+    // close update stock modal too (optional but recommended)
+    setModalOpen(false);
+    setSelectedItem(null);
+  }}
+/>
 
 
       <ItemHistoryModal

@@ -26,6 +26,7 @@ export default function ToOrderPage() {
   const [q, setQ] = useState("");
   const [clearing, setClearing] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  const [pdfLoading, setPdfLoading] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -127,6 +128,45 @@ export default function ToOrderPage() {
           >
             🧹 Reset To Order
           </button>
+
+          <button
+  disabled={pdfLoading || rows.length === 0}
+  onClick={async () => {
+    try {
+      setPdfLoading(true);
+      setErr(null);
+      setMsg(null);
+
+      const res = await fetch("/api/to-order/pdf", { method: "GET" });
+
+      if (!res.ok) {
+        const j = await res.json().catch(() => null);
+        throw new Error(j?.error ?? "Failed to generate PDF");
+      }
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `to-order-${orderDate ?? "unknown"}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+
+      URL.revokeObjectURL(url);
+      setMsg("PDF downloaded.");
+    } catch (e: any) {
+      setErr(e?.message ?? "Failed to download PDF");
+    } finally {
+      setPdfLoading(false);
+    }
+  }}
+  className="rounded-lg bg-black px-4 py-2 text-white hover:bg-gray-800 disabled:opacity-50"
+>
+  {pdfLoading ? "Converting..." : "Convert to PDF"}
+</button>
+
         </div>
 
         <div className="rounded-xl bg-white p-4 shadow">

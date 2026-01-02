@@ -32,8 +32,9 @@ export default function StockTakePage() {
 
   const [err, setErr] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
+  const [pdfLoading, setPdfLoading] = useState(false);
 
-  // Load parent categories + add "All"
+  // Load parent categories
   useEffect(() => {
     const loadParents = async () => {
       setLoadingParents(true);
@@ -56,7 +57,7 @@ export default function StockTakePage() {
     loadParents();
   }, []);
 
-  // When category changes, load items (either that category, or ALL)
+  // Load items when category changes
   useEffect(() => {
     const loadItems = async () => {
       if (!parentId) {
@@ -67,70 +68,51 @@ export default function StockTakePage() {
       setLoadingItems(true);
       setErr(null);
 
-      // ✅ ALL: fetch every active subcategory for mapping + every active item
+      // ALL
       if (parentId === "__ALL__") {
-        const { data: subs, error: subErr } = await supabase
+        const { data: subs } = await supabase
           .from("categories")
           .select("id,name")
           .not("parent_id", "is", null)
           .eq("is_active", true);
 
-        if (subErr) {
-          setErr(subErr.message);
-          setItems([]);
-          setLoadingItems(false);
-          return;
-        }
-
         const subNameMap = new Map<string, string>();
         for (const s of subs ?? []) subNameMap.set(s.id, s.name);
 
-        const { data: itemData, error: itemErr } = await supabase
+        const { data, error } = await supabase
           .from("items")
           .select("id,name,stock_count,quota,quota_disabled,subcategory_id")
           .eq("is_active", true)
           .order("name")
           .limit(5000);
 
-        if (itemErr) {
-          setErr(itemErr.message);
+        if (error) {
+          setErr(error.message);
           setItems([]);
-          setLoadingItems(false);
-          return;
+        } else {
+          setItems(
+            (data ?? []).map((it: any) => ({
+              ...it,
+              subcategory_name:
+                subNameMap.get(it.subcategory_id) ?? "Unknown",
+            }))
+          );
         }
 
-        const enriched = (itemData ?? []).map((it: any) => ({
-          id: it.id,
-          name: it.name,
-          stock_count: it.stock_count,
-          quota: it.quota,
-          quota_disabled: it.quota_disabled,
-          subcategory_id: it.subcategory_id,
-          subcategory_name: subNameMap.get(it.subcategory_id) ?? "Unknown",
-        })) as ItemRow[];
-
-        setItems(enriched);
         setLoadingItems(false);
         return;
       }
 
-      // ✅ Normal category: load its subcategories then its items
-      const { data: subData, error: subErr } = await supabase
+      // Single category
+      const { data: subs } = await supabase
         .from("categories")
         .select("id,name")
         .eq("parent_id", parentId)
-        .eq("is_active", true)
-        .order("name");
+        .eq("is_active", true);
 
-      if (subErr) {
-        setErr(subErr.message);
-        setItems([]);
-        setLoadingItems(false);
-        return;
-      }
-
-      const subs = (subData ?? []) as Category[];
-      const subIds = subs.map((s) => s.id);
+      const subIds = (subs ?? []).map((s) => s.id);
+      const subNameMap = new Map<string, string>();
+      for (const s of subs ?? []) subNameMap.set(s.id, s.name);
 
       if (subIds.length === 0) {
         setItems([]);
@@ -138,35 +120,27 @@ export default function StockTakePage() {
         return;
       }
 
-      const subNameMap = new Map<string, string>();
-      for (const s of subs) subNameMap.set(s.id, s.name);
-
-      const { data: itemData, error: itemErr } = await supabase
+      const { data, error } = await supabase
         .from("items")
         .select("id,name,stock_count,quota,quota_disabled,subcategory_id")
         .in("subcategory_id", subIds)
         .eq("is_active", true)
         .order("name")
-        .limit(2000);
+        .limit(5000);
 
-      if (itemErr) {
-        setErr(itemErr.message);
+      if (error) {
+        setErr(error.message);
         setItems([]);
-        setLoadingItems(false);
-        return;
+      } else {
+        setItems(
+          (data ?? []).map((it: any) => ({
+            ...it,
+            subcategory_name:
+              subNameMap.get(it.subcategory_id) ?? "Unknown",
+          }))
+        );
       }
 
-      const enriched = (itemData ?? []).map((it: any) => ({
-        id: it.id,
-        name: it.name,
-        stock_count: it.stock_count,
-        quota: it.quota,
-        quota_disabled: it.quota_disabled,
-        subcategory_id: it.subcategory_id,
-        subcategory_name: subNameMap.get(it.subcategory_id) ?? "Unknown",
-      })) as ItemRow[];
-
-      setItems(enriched);
       setLoadingItems(false);
     };
 
@@ -181,80 +155,104 @@ export default function StockTakePage() {
   return (
     <main className="min-h-screen bg-gray-100 p-6">
       <div className="mx-auto max-w-4xl">
-        {/* Top bar with To Order button */}
+        {/* Top bar */}
         <div className="mb-4 flex items-center justify-between gap-3">
           <Link href="/" className="text-blue-600 hover:underline">
             ← Back
           </Link>
 
-          {/* ✅ RESTORED: To Order button (requires owner pin & pushes selection) */}
-          <button
-            className="rounded-lg border bg-white px-4 py-2 text-sm shadow-sm hover:bg-gray-50 disabled:opacity-50"
-            disabled={!parentId || loadingItems}
-            onClick={async () => {
-  if (!parentId) return;
+          <div className="flex gap-2">
+            <button
+              className="rounded-lg border bg-white px-4 py-2 text-sm shadow-sm hover:bg-gray-50"
+              disabled={!parentId || loadingItems}
+              onClick={async () => {
+                if (!parentId) return;
 
-  const ownerPin = prompt("Enter Owner PIN to add items to To Order:");
-  if (!ownerPin) return;
+                const ownerPin = prompt(
+                  "Enter Owner PIN to add items to To Order:"
+                );
+                if (!ownerPin) return;
 
-  setErr(null);
-  setMsg(null);
+                setErr(null);
+                setMsg(null);
 
-  // ✅ If ALL selected -> push all below quota items
-  if (parentId === "__ALL__") {
-    const res = await fetch("/api/to-order/push-all", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ownerPin }),
-    });
+                const res =
+                  parentId === "__ALL__"
+                    ? await fetch("/api/to-order/push-all", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ ownerPin }),
+                      })
+                    : await fetch("/api/to-order/push", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          ownerPin,
+                          parentCategoryId: parentId,
+                        }),
+                      });
 
-    const json = await res.json();
+                const json = await res.json();
+                if (!res.ok) {
+                  setErr(json?.error ?? "Failed to add to To Order");
+                  return;
+                }
 
-    if (!res.ok) {
-      setErr(json?.error ?? "Failed to add ALL to To Order");
-      return;
-    }
+                setMsg("Items added to To Order.");
+                router.push("/to-order");
+              }}
+            >
+              🛒 To Order
+            </button>
 
-    setMsg(
-      json.added === 0
-        ? "No items below quota across all categories."
-        : `Added ${json.added} item(s) below quota across ALL categories. Order date: ${json.order_date}`
-    );
+            <button
+              className="rounded-lg bg-black px-4 py-2 text-white hover:bg-gray-800 disabled:opacity-50"
+              disabled={pdfLoading || !parentId}
+              onClick={async () => {
+                try {
+                  setPdfLoading(true);
+                  setErr(null);
+                  setMsg(null);
 
-    router.push("/to-order");
-    return;
-  }
+                  const res = await fetch(
+                    `/api/stock-take/pdf?categoryId=${encodeURIComponent(
+                      parentId
+                    )}`
+                  );
 
-  // ✅ Normal single category push
-  const res = await fetch("/api/to-order/push", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ ownerPin, parentCategoryId: parentId }),
-  });
+                  if (!res.ok) {
+                    const j = await res.json().catch(() => null);
+                    throw new Error(
+                      j?.error ?? "Failed to generate PDF"
+                    );
+                  }
 
-  const json = await res.json();
+                  const blob = await res.blob();
+                  const url = URL.createObjectURL(blob);
 
-  if (!res.ok) {
-    setErr(json?.error ?? "Failed to add to To Order");
-    return;
-  }
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = `stocktake-${selectedParentName || "unknown"}.pdf`;
+                  document.body.appendChild(a);
+                  a.click();
+                  a.remove();
 
-  setMsg(
-    json.added === 0
-      ? "No items below quota for this category."
-      : `Added ${json.added} item(s) below quota. Order date: ${json.order_date}`
-  );
-
-  router.push("/to-order");
-}}
-
-          >
-            🛒 To Order
-          </button>
+                  URL.revokeObjectURL(url);
+                  setMsg("PDF downloaded.");
+                } catch (e: any) {
+                  setErr(e?.message ?? "Failed to download PDF");
+                } finally {
+                  setPdfLoading(false);
+                }
+              }}
+            >
+              {pdfLoading ? "Converting..." : "Convert to PDF"}
+            </button>
+          </div>
         </div>
 
-        <h1 className="text-3xl font-bold mb-2">Stock Take</h1>
-        <p className="text-gray-600 mb-6">
+        <h1 className="mb-2 text-3xl font-bold">Stock Take</h1>
+        <p className="mb-6 text-gray-600">
           Select a category (or All) → view items with stock & quota.
         </p>
 
@@ -271,8 +269,8 @@ export default function StockTakePage() {
           </div>
         )}
 
-        <div className="rounded-xl bg-white p-4 shadow mb-6">
-          <label className="block text-sm font-semibold mb-1">
+        <div className="mb-6 rounded-xl bg-white p-4 shadow">
+          <label className="mb-1 block text-sm font-semibold">
             Select Category
           </label>
 
@@ -295,78 +293,46 @@ export default function StockTakePage() {
         </div>
 
         <div className="rounded-xl bg-white p-4 shadow">
-          <div className="mb-3">
-            <p className="text-sm text-gray-600">
-              {selectedParentName ? (
-                <>
-                  Category:{" "}
-                  <span className="font-semibold">{selectedParentName}</span>
-                </>
-              ) : (
-                "Select a category to view items."
-              )}
-            </p>
-          </div>
-
-          {loadingItems && (
-            <p className="text-sm text-gray-500">Loading items...</p>
-          )}
-
-          {!loadingItems && parentId && items.length === 0 && (
+          {!loadingItems && items.length === 0 && parentId && (
             <p className="text-sm text-gray-500">
               No items found for this selection.
             </p>
           )}
 
-          {!loadingItems && items.length > 0 && (
-            <div className="space-y-3">
-              {items.map((it) => {
-                const quotaEnabled = !it.quota_disabled && it.quota !== null;
-                const belowQuota =
-                  quotaEnabled && it.stock_count < (it.quota as number);
-                const quotaText = quotaEnabled ? String(it.quota) : "—";
+          {!loadingItems &&
+            items.map((it) => {
+              const quotaEnabled =
+                !it.quota_disabled && it.quota !== null;
+              const belowQuota =
+                quotaEnabled &&
+                it.stock_count < (it.quota as number);
 
-                return (
-                  <div
-                    key={it.id}
-                    className={`rounded-lg border p-3 ${
-                      belowQuota ? "bg-red-50 border-red-200" : "bg-gray-50"
-                    }`}
-                  >
-                    <div className="flex flex-col gap-1">
-                      <div className="font-semibold">{it.name}</div>
-
-                      <div className="text-xs text-gray-600">
-                        Subcategory:{" "}
-                        <span className="font-medium">
-                          {it.subcategory_name ?? "Unknown"}
-                        </span>
-                      </div>
-
-                      <div className="text-sm text-gray-700">
-                        Stock:{" "}
-                        <span
-                          className={`font-bold ${
-                            belowQuota ? "text-red-600" : ""
-                          }`}
-                        >
-                          {it.stock_count}
-                        </span>
-                        {"  "} / Quota:{" "}
-                        <span className="font-semibold">{quotaText}</span>
-
-                        {belowQuota && (
-                          <span className="ml-2 rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700">
-                            Below quota
-                          </span>
-                        )}
-                      </div>
-                    </div>
+              return (
+                <div
+                  key={it.id}
+                  className={`mb-3 rounded-lg border p-3 ${
+                    belowQuota
+                      ? "bg-red-50 border-red-200"
+                      : "bg-gray-50"
+                  }`}
+                >
+                  <div className="font-semibold">{it.name}</div>
+                  <div className="text-xs text-gray-600">
+                    Subcategory: {it.subcategory_name ?? "Unknown"}
                   </div>
-                );
-              })}
-            </div>
-          )}
+                  <div className="text-sm">
+                    Stock:{" "}
+                    <span
+                      className={`font-bold ${
+                        belowQuota ? "text-red-600" : ""
+                      }`}
+                    >
+                      {it.stock_count}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
         </div>
       </div>
     </main>

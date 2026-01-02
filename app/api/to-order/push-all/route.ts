@@ -6,15 +6,12 @@ export const runtime = "nodejs";
 
 type Body = {
   ownerPin?: string;
-  parentCategoryId?: string;
 };
 
 export async function POST(req: Request) {
   try {
     const body = (await req.json()) as Body;
-
     const ownerPin = String(body?.ownerPin ?? "").trim();
-    const parentCategoryId = String(body?.parentCategoryId ?? "").trim();
 
     if (!ownerPin) {
       return NextResponse.json({ error: "Owner PIN is required" }, { status: 400 });
@@ -22,17 +19,8 @@ export async function POST(req: Request) {
     if (!/^\d{4,8}$/.test(ownerPin)) {
       return NextResponse.json({ error: "Owner PIN must be 4 to 8 digits" }, { status: 400 });
     }
-    if (!parentCategoryId) {
-      return NextResponse.json({ error: "parentCategoryId is required" }, { status: 400 });
-    }
-    if (parentCategoryId === "__ALL__") {
-      return NextResponse.json(
-        { error: "Use /api/to-order/push-all for All" },
-        { status: 400 }
-      );
-    }
 
-    // 1) Verify owner PIN
+    // Verify owner PIN
     const { data: pinRow, error: pinErr } = await supabaseAdmin
       .from("owner_pin_settings")
       .select("owner_pin_hash")
@@ -48,61 +36,43 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid owner PIN" }, { status: 401 });
     }
 
-    // 2) Load parent category name
-    const { data: parentRow, error: parentErr } = await supabaseAdmin
+    // Load all categories to map subcategory -> parent
+    const { data: cats, error: catErr } = await supabaseAdmin
       .from("categories")
-      .select("id,name")
-      .eq("id", parentCategoryId)
-      .eq("is_active", true)
-      .single();
-
-    if (parentErr || !parentRow) {
-      return NextResponse.json({ error: "Selected category not found" }, { status: 400 });
-    }
-
-    const parentName = parentRow.name as string;
-
-    // 3) Get subcategories under that parent
-    const { data: subs, error: subErr } = await supabaseAdmin
-      .from("categories")
-      .select("id,name")
-      .eq("parent_id", parentCategoryId)
+      .select("id,name,parent_id")
       .eq("is_active", true);
 
-    if (subErr) return NextResponse.json({ error: subErr.message }, { status: 500 });
+    if (catErr) return NextResponse.json({ error: catErr.message }, { status: 500 });
 
-    const subIds = (subs ?? []).map((s: any) => s.id as string);
-    const subNameMap = new Map<string, string>();
-    for (const s of subs ?? []) subNameMap.set(s.id, s.name);
+    const subName = new Map<string, string>();
+    const subToParent = new Map<string, string>();
+    const parentName = new Map<string, string>();
 
-    if (subIds.length === 0) {
-      // Clear queue + return 0 added (category has no subcategories/items)
-      await supabaseAdmin
-        .from("to_order_queue")
-        .delete()
-        .neq("id", "00000000-0000-0000-0000-000000000000");
-
-      const orderDate = new Date().toISOString().slice(0, 10);
-      return NextResponse.json({ ok: true, added: 0, order_date: orderDate }, { status: 200 });
+    for (const c of cats ?? []) {
+      if (c.parent_id) {
+        subName.set(c.id, c.name);
+        subToParent.set(c.id, c.parent_id);
+      } else {
+        parentName.set(c.id, c.name);
+      }
     }
 
-    // 4) Load ONLY items inside those subcategories
+    // Load all items
     const { data: items, error: itemErr } = await supabaseAdmin
       .from("items")
       .select("id,name,stock_count,quota,quota_disabled,subcategory_id")
-      .in("subcategory_id", subIds)
       .eq("is_active", true)
       .limit(10000);
 
     if (itemErr) return NextResponse.json({ error: itemErr.message }, { status: 500 });
 
-    // 5) Filter below quota
+    // Filter below quota
     const below = (items ?? []).filter((it: any) => {
       const quotaEnabled = !it.quota_disabled && it.quota !== null;
       return quotaEnabled && it.stock_count < it.quota;
     });
 
-    // 6) Replace queue with only THIS category’s below-quota items
+    // Clear entire queue
     const { error: delErr } = await supabaseAdmin
       .from("to_order_queue")
       .delete()
@@ -110,21 +80,27 @@ export async function POST(req: Request) {
 
     if (delErr) return NextResponse.json({ error: delErr.message }, { status: 500 });
 
+    // Insert new queue
     if (below.length > 0) {
-      const payload = below.map((it: any) => ({
-        parent_category_id: parentCategoryId,
-        parent_category_name: parentName,
+      const payload = below.map((it: any) => {
+        const subId = it.subcategory_id as string;
+        const parentId = subToParent.get(subId) ?? null;
 
-        item_id: it.id,
-        item_name: it.name,
+        return {
+          parent_category_id: parentId,
+          parent_category_name: parentId ? (parentName.get(parentId) ?? "Unknown") : "Unknown",
 
-        subcategory_id: it.subcategory_id,
-        subcategory_name: subNameMap.get(it.subcategory_id) ?? "Unknown",
+          item_id: it.id,
+          item_name: it.name,
 
-        stock_count: it.stock_count,
-        quota: it.quota,
-        // order_date uses DB default current_date
-      }));
+          subcategory_id: subId,
+          subcategory_name: subName.get(subId) ?? "Unknown",
+
+          stock_count: it.stock_count,
+          quota: it.quota,
+          // order_date uses DB default current_date
+        };
+      });
 
       const { error: insErr } = await supabaseAdmin.from("to_order_queue").insert(payload);
       if (insErr) return NextResponse.json({ error: insErr.message }, { status: 500 });

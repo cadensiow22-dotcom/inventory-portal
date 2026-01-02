@@ -27,7 +27,6 @@ export default function ToOrderPage() {
   const [clearing, setClearing] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
-  // Load queue
   useEffect(() => {
     const load = async () => {
       setLoading(true);
@@ -50,7 +49,6 @@ export default function ToOrderPage() {
     load();
   }, []);
 
-  // Read-only order date derived from DB rows
   const orderDate = useMemo(() => {
     if (rows.length === 0) return null;
     return rows.map((r) => r.order_date).sort().at(-1) ?? null;
@@ -77,7 +75,6 @@ export default function ToOrderPage() {
   return (
     <main className="min-h-screen bg-gray-100 p-6">
       <div className="mx-auto max-w-4xl">
-        {/* Header */}
         <div className="mb-4 flex items-center justify-between gap-3">
           <Link href="/" className="text-blue-600 hover:underline">
             ← Home
@@ -85,7 +82,6 @@ export default function ToOrderPage() {
           <h1 className="text-2xl font-bold">To Order</h1>
         </div>
 
-        {/* Order Date + Reset (PIN required via API) */}
         <div className="mb-4 rounded-xl bg-white p-4 shadow flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="text-sm text-gray-600">
             Order Date:{" "}
@@ -133,7 +129,6 @@ export default function ToOrderPage() {
           </button>
         </div>
 
-        {/* Search */}
         <div className="rounded-xl bg-white p-4 shadow">
           <label className="text-sm font-semibold">Search</label>
           <input

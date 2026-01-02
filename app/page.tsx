@@ -118,7 +118,7 @@ export default function Page() {
     className="border px-4 py-2 rounded bg-white shadow hover:shadow-md transition"
     onClick={() => setOpenManageNames(true)}
   >
-    Manage Names (Owner Only)
+    Manage Names
   </button>
 </div>
 

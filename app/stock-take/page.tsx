@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
 type Category = {
@@ -17,22 +17,23 @@ type ItemRow = {
   quota: number | null;
   quota_disabled: boolean;
   subcategory_id: string;
-  subcategory_name?: string; // added
+  subcategory_name?: string;
 };
 
 export default function StockTakePage() {
+  const router = useRouter();
+
   const [parents, setParents] = useState<Category[]>([]);
   const [parentId, setParentId] = useState<string>("");
-  const router = useRouter();
-  const [msg, setMsg] = useState<string | null>(null);
 
   const [items, setItems] = useState<ItemRow[]>([]);
   const [loadingParents, setLoadingParents] = useState(true);
   const [loadingItems, setLoadingItems] = useState(false);
 
   const [err, setErr] = useState<string | null>(null);
+  const [msg, setMsg] = useState<string | null>(null);
 
-  // 1) Load parent categories (top-level)
+  // Load parent categories + add "All"
   useEffect(() => {
     const loadParents = async () => {
       setLoadingParents(true);
@@ -46,16 +47,18 @@ export default function StockTakePage() {
         .order("name");
 
       if (error) setErr(error.message);
-      setParents((data ?? []) as Category[]);
+
+      const list = (data ?? []) as Category[];
+      setParents([{ id: "__ALL__", name: "All" }, ...list]);
       setLoadingParents(false);
     };
 
     loadParents();
   }, []);
 
-  // 2) When category changes, load ALL items under ALL subcategories in that category
+  // When category changes, load items (either that category, or ALL)
   useEffect(() => {
-    const loadItemsForCategory = async () => {
+    const loadItems = async () => {
       if (!parentId) {
         setItems([]);
         return;
@@ -64,7 +67,54 @@ export default function StockTakePage() {
       setLoadingItems(true);
       setErr(null);
 
-      // A) Get ALL subcategories under selected category
+      // ✅ ALL: fetch every active subcategory for mapping + every active item
+      if (parentId === "__ALL__") {
+        const { data: subs, error: subErr } = await supabase
+          .from("categories")
+          .select("id,name")
+          .not("parent_id", "is", null)
+          .eq("is_active", true);
+
+        if (subErr) {
+          setErr(subErr.message);
+          setItems([]);
+          setLoadingItems(false);
+          return;
+        }
+
+        const subNameMap = new Map<string, string>();
+        for (const s of subs ?? []) subNameMap.set(s.id, s.name);
+
+        const { data: itemData, error: itemErr } = await supabase
+          .from("items")
+          .select("id,name,stock_count,quota,quota_disabled,subcategory_id")
+          .eq("is_active", true)
+          .order("name")
+          .limit(5000);
+
+        if (itemErr) {
+          setErr(itemErr.message);
+          setItems([]);
+          setLoadingItems(false);
+          return;
+        }
+
+        const enriched = (itemData ?? []).map((it: any) => ({
+          id: it.id,
+          name: it.name,
+          stock_count: it.stock_count,
+          quota: it.quota,
+          quota_disabled: it.quota_disabled,
+          subcategory_id: it.subcategory_id,
+          subcategory_name: subNameMap.get(it.subcategory_id) ?? "Unknown",
+        })) as ItemRow[];
+
+        setItems(enriched);
+        setLoadingItems(false);
+        return;
+      }
+
+      // ✅ Normal category: load its subcategories then its items
       const { data: subData, error: subErr } = await supabase
         .from("categories")
         .select("id,name")
@@ -82,18 +132,15 @@ export default function StockTakePage() {
       const subs = (subData ?? []) as Category[];
       const subIds = subs.map((s) => s.id);
 
-      // If the category has no subcategories, then there are no items to show
       if (subIds.length === 0) {
         setItems([]);
         setLoadingItems(false);
         return;
       }
 
-      // Make a quick map so we can show subcategory name beside items
       const subNameMap = new Map<string, string>();
       for (const s of subs) subNameMap.set(s.id, s.name);
 
-      // B) Get ALL items whose subcategory_id is in those subcategories
       const { data: itemData, error: itemErr } = await supabase
         .from("items")
         .select("id,name,stock_count,quota,quota_disabled,subcategory_id")
@@ -109,51 +156,76 @@ export default function StockTakePage() {
         return;
       }
 
-      // Attach subcategory name client-side
       const enriched = (itemData ?? []).map((it: any) => ({
-  id: it.id,
-  name: it.name,
-  stock_count: it.stock_count,
-  quota: it.quota,
-  quota_disabled: it.quota_disabled,
-  subcategory_id: it.subcategory_id, // ✅ add this
-  subcategory_name: subNameMap.get(it.subcategory_id) ?? "Unknown",
-})) as any;
-
+        id: it.id,
+        name: it.name,
+        stock_count: it.stock_count,
+        quota: it.quota,
+        quota_disabled: it.quota_disabled,
+        subcategory_id: it.subcategory_id,
+        subcategory_name: subNameMap.get(it.subcategory_id) ?? "Unknown",
+      })) as ItemRow[];
 
       setItems(enriched);
       setLoadingItems(false);
     };
 
-    loadItemsForCategory();
+    loadItems();
   }, [parentId]);
 
   const selectedParentName = useMemo(() => {
+    if (parentId === "__ALL__") return "All";
     return parents.find((p) => p.id === parentId)?.name ?? "";
   }, [parents, parentId]);
 
   return (
     <main className="min-h-screen bg-gray-100 p-6">
       <div className="mx-auto max-w-4xl">
-        {/* Top bar */}
+        {/* Top bar with To Order button */}
         <div className="mb-4 flex items-center justify-between gap-3">
           <Link href="/" className="text-blue-600 hover:underline">
             ← Back
           </Link>
 
-          {/* To Order button at top */}
+          {/* ✅ RESTORED: To Order button (requires owner pin & pushes selection) */}
           <button
-  className="rounded-lg border bg-white px-4 py-2 text-sm shadow-sm hover:bg-gray-50 disabled:opacity-50"
-  disabled={!parentId || loadingItems}
-  onClick={async () => {
+            className="rounded-lg border bg-white px-4 py-2 text-sm shadow-sm hover:bg-gray-50 disabled:opacity-50"
+            disabled={!parentId || loadingItems}
+            onClick={async () => {
   if (!parentId) return;
 
-  const ownerPin = prompt("Enter Owner PIN to add this category to To Order:");
+  const ownerPin = prompt("Enter Owner PIN to add items to To Order:");
   if (!ownerPin) return;
 
   setErr(null);
   setMsg(null);
 
+  // ✅ If ALL selected -> push all below quota items
+  if (parentId === "__ALL__") {
+    const res = await fetch("/api/to-order/push-all", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ownerPin }),
+    });
+
+    const json = await res.json();
+
+    if (!res.ok) {
+      setErr(json?.error ?? "Failed to add ALL to To Order");
+      return;
+    }
+
+    setMsg(
+      json.added === 0
+        ? "No items below quota across all categories."
+        : `Added ${json.added} item(s) below quota across ALL categories. Order date: ${json.order_date}`
+    );
+
+    router.push("/to-order");
+    return;
+  }
+
+  // ✅ Normal single category push
   const res = await fetch("/api/to-order/push", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -175,18 +247,17 @@ export default function StockTakePage() {
 
   router.push("/to-order");
 }}
->
-  🛒 To Order
-</button>
 
+          >
+            🛒 To Order
+          </button>
         </div>
 
         <h1 className="text-3xl font-bold mb-2">Stock Take</h1>
         <p className="text-gray-600 mb-6">
-          Select a category → view all items (across all its subcategories) with stock & quota.
+          Select a category (or All) → view items with stock & quota.
         </p>
 
-        {/* Error box */}
         {err && (
           <div className="mb-4 rounded-xl bg-white p-4 shadow">
             <p className="font-semibold text-red-600">Error</p>
@@ -194,7 +265,12 @@ export default function StockTakePage() {
           </div>
         )}
 
-        {/* Category selector */}
+        {msg && (
+          <div className="mb-4 rounded-xl bg-white p-4 shadow">
+            <p className="text-sm font-semibold text-green-700">{msg}</p>
+          </div>
+        )}
+
         <div className="rounded-xl bg-white p-4 shadow mb-6">
           <label className="block text-sm font-semibold mb-1">
             Select Category
@@ -218,13 +294,13 @@ export default function StockTakePage() {
           )}
         </div>
 
-        {/* Items list */}
         <div className="rounded-xl bg-white p-4 shadow">
           <div className="mb-3">
             <p className="text-sm text-gray-600">
               {selectedParentName ? (
                 <>
-                  Category: <span className="font-semibold">{selectedParentName}</span>
+                  Category:{" "}
+                  <span className="font-semibold">{selectedParentName}</span>
                 </>
               ) : (
                 "Select a category to view items."
@@ -237,46 +313,54 @@ export default function StockTakePage() {
           )}
 
           {!loadingItems && parentId && items.length === 0 && (
-            <p className="text-sm text-gray-500">No items found in this category.</p>
+            <p className="text-sm text-gray-500">
+              No items found for this selection.
+            </p>
           )}
 
           {!loadingItems && items.length > 0 && (
             <div className="space-y-3">
               {items.map((it) => {
-                const quotaText =
-                  it.quota_disabled || it.quota === null ? "—" : String(it.quota);
+                const quotaEnabled = !it.quota_disabled && it.quota !== null;
+                const belowQuota =
+                  quotaEnabled && it.stock_count < (it.quota as number);
+                const quotaText = quotaEnabled ? String(it.quota) : "—";
 
                 return (
-                  <div key={it.id} className="rounded-lg border bg-gray-50 p-3">
+                  <div
+                    key={it.id}
+                    className={`rounded-lg border p-3 ${
+                      belowQuota ? "bg-red-50 border-red-200" : "bg-gray-50"
+                    }`}
+                  >
                     <div className="flex flex-col gap-1">
                       <div className="font-semibold">{it.name}</div>
+
                       <div className="text-xs text-gray-600">
-                        Subcategory: <span className="font-medium">{it.subcategory_name}</span>
+                        Subcategory:{" "}
+                        <span className="font-medium">
+                          {it.subcategory_name ?? "Unknown"}
+                        </span>
                       </div>
+
                       <div className="text-sm text-gray-700">
-  {(() => {
-    const quotaEnabled = !it.quota_disabled && it.quota !== null;
-    const belowQuota = quotaEnabled && it.stock_count < (it.quota as number);
+                        Stock:{" "}
+                        <span
+                          className={`font-bold ${
+                            belowQuota ? "text-red-600" : ""
+                          }`}
+                        >
+                          {it.stock_count}
+                        </span>
+                        {"  "} / Quota:{" "}
+                        <span className="font-semibold">{quotaText}</span>
 
-    return (
-      <>
-        Stock:{" "}
-        <span className={`font-bold ${belowQuota ? "text-red-600" : ""}`}>
-          {it.stock_count}
-        </span>
-        {"  "} / Quota:{" "}
-        <span className="font-semibold">{quotaText}</span>
-
-        {belowQuota && (
-          <span className="ml-2 rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700">
-            Below quota
-          </span>
-        )}
-      </>
-    );
-  })()}
-</div>
-
+                        {belowQuota && (
+                          <span className="ml-2 rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700">
+                            Below quota
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 );

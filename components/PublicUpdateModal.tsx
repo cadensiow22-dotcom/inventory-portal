@@ -27,64 +27,82 @@ export default function PublicUpdateModal({
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
 
+  const [updateDate, setUpdateDate] = useState(() => {
+    const d = new Date();
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}`;
+  });
+
   useEffect(() => {
     if (!open) return;
+
     setChangedByName("");
     setUid("");
     setQty("");
     setErr("");
     setLoading(false);
+
+    // reset date to today whenever modal opens
+    const d = new Date();
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    setUpdateDate(`${yyyy}-${mm}-${dd}`);
   }, [open]);
 
   if (!open || !item) return null;
 
-  const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+  async function submit() {
+    setErr("");
 
- async function submit() {
-  setErr("");
+    const currentItem = item; // make TS happy
+    if (!currentItem) {
+      return setErr("No item selected.");
+    }
 
-  const currentItem = item; // make TS happy
-  if (!currentItem) {
-    return setErr("No item selected.");
-  }
+    setLoading(true);
 
-  setLoading(true);
+    const name = changedByName.trim();
+    const staffUid = uid.trim();
+    const qtyUsed = Number(qty);
 
-  const name = changedByName.trim();
-  const staffUid = uid.trim();
-  const qtyUsed = Number(qty);
+    if (!name) {
+      setLoading(false);
+      return setErr("Name is required.");
+    }
+    if (!staffUid) {
+      setLoading(false);
+      return setErr("UID is required.");
+    }
+    if (!Number.isFinite(qtyUsed) || qtyUsed <= 0) {
+      setLoading(false);
+      return setErr("Quantity must be more than 0.");
+    }
+    if (!updateDate) {
+      setLoading(false);
+      return setErr("Date is required.");
+    }
 
-  if (!name) {
+    const { error } = await supabase.rpc("consume_stock_with_uid", {
+      p_item_id: currentItem.id,
+      p_qty_used: qtyUsed,
+      p_changed_by_name: name,
+      p_staff_uid: staffUid,
+      p_changed_by_date: updateDate,
+    });
+
     setLoading(false);
-    return setErr("Name is required.");
-  }
-  if (!staffUid) {
-    setLoading(false);
-    return setErr("UID is required.");
-  }
-  if (!Number.isFinite(qtyUsed) || qtyUsed <= 0) {
-    setLoading(false);
-    return setErr("Quantity must be more than 0.");
-  }
 
-  const { error } = await supabase.rpc("consume_stock_with_uid", {
-    p_item_id: currentItem.id,
-    p_qty_used: qtyUsed,
-    p_changed_by_name: name,
-    p_staff_uid: staffUid,
-    p_changed_by_date: today,
-  });
+    if (error) {
+      setErr(error.message);
+      return;
+    }
 
-  setLoading(false);
-
-  if (error) {
-    setErr(error.message);
-    return;
+    onSuccess();
+    onClose();
   }
-
-  onSuccess();
-  onClose();
-}
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
@@ -101,7 +119,8 @@ export default function PublicUpdateModal({
         <div className="rounded-lg border p-3 text-sm">
           <div className="font-semibold">{item.name}</div>
           <div className="text-gray-600">
-            Current stock: <span className="font-semibold">{item.stock_count}</span>
+            Current stock:{" "}
+            <span className="font-semibold">{item.stock_count}</span>
           </div>
         </div>
 
@@ -125,7 +144,9 @@ export default function PublicUpdateModal({
           </div>
 
           <div>
-            <label className="block text-sm font-semibold">Quantity (to subtract)</label>
+            <label className="block text-sm font-semibold">
+              Quantity (to subtract)
+            </label>
             <input
               inputMode="numeric"
               pattern="\d*"
@@ -134,6 +155,17 @@ export default function PublicUpdateModal({
               className="mt-1 w-full rounded-lg border p-2"
               placeholder="e.g. 10"
               autoComplete="off"
+            />
+          </div>
+
+          {/* NEW: Date input */}
+          <div>
+            <label className="block text-sm font-semibold">Date</label>
+            <input
+              type="date"
+              value={updateDate}
+              onChange={(e) => setUpdateDate(e.target.value)}
+              className="mt-1 w-full rounded-lg border p-2"
             />
           </div>
 
@@ -148,7 +180,8 @@ export default function PublicUpdateModal({
           </button>
 
           <p className="text-xs text-gray-500">
-            This will subtract from stock. No adding, deleting, linking or unlinking is allowed in Admin OFF.
+            This will subtract from stock. No adding, deleting, linking or
+            unlinking is allowed in Admin OFF.
           </p>
         </div>
       </div>

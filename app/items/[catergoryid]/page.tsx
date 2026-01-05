@@ -151,7 +151,7 @@ useEffect(() => {
   .select('id,name,stock_count,search_text,quota,quota_disabled')
   .eq('subcategory_id', categoryId)
   .eq('is_active', true)
-  .limit(200);
+  .limit(1000);
 
 
 

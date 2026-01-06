@@ -22,6 +22,8 @@ export default function AddItemModal({
   const [name, setName] = useState("");
   const [stock, setStock] = useState("0");
   const [searchText, setSearchText] = useState("");
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string>("");
 
   // ✅ ADMIN PIN ONLY
   const [adminPin, setAdminPin] = useState("");
@@ -48,6 +50,8 @@ export default function AddItemModal({
     setAdminPin("");
     setByName("");
     setByDate(new Date().toISOString().slice(0, 10));
+    setPhotoFile(null);
+    setPhotoPreview("");
 
     setError("");
     setLoading(false);
@@ -95,12 +99,45 @@ export default function AddItemModal({
       return;
     }
 
+    if (!photoFile) {
+  setError("Photo is required.");
+  setLoading(false);
+  return;
+}
+
     // ✅ ALWAYS ADMIN PIN
     if (!/^\d{6}$/.test(ap)) {
       setError("Admin PIN must be exactly 6 digits.");
       setLoading(false);
       return;
     }
+
+    // ✅ Upload photo to Supabase Storage first
+const ext = (photoFile.name.split(".").pop() || "jpg").toLowerCase();
+const filePath = `items/${subcategoryId}/${crypto.randomUUID()}.${ext}`;
+
+const uploadRes = await supabase.storage
+  .from("item-photos")
+  .upload(filePath, photoFile, {
+    cacheControl: "3600",
+    upsert: false,
+    contentType: photoFile.type || "image/jpeg",
+  });
+
+if (uploadRes.error) {
+  setError(uploadRes.error.message);
+  setLoading(false);
+  return;
+}
+
+const pub = supabase.storage.from("item-photos").getPublicUrl(filePath);
+const photoUrl = pub.data.publicUrl;
+
+if (!photoUrl) {
+  setError("Failed to get photo URL.");
+  setLoading(false);
+  return;
+}
 
     const rpcName = isBarcodeFlow
       ? "add_item_and_link_barcode_with_pin"
@@ -111,6 +148,7 @@ export default function AddItemModal({
       p_stock_count: stockNum,
       p_subcategory_id: subcategoryId,
       p_search_text: tags,
+      p_photo_url: photoUrl,
       p_attributes: {},
       p_changed_by_name: who,
       p_changed_by_date: date,
@@ -171,6 +209,36 @@ export default function AddItemModal({
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
           />
+           {/* ✅ REQUIRED PHOTO */}
+<div className="space-y-2">
+  <label className="text-sm font-semibold">Item photo (required)</label>
+
+  <input
+    type="file"
+    accept="image/*"
+    capture="environment"
+    className="w-full border rounded-lg p-2"
+    onChange={(e) => {
+      const f = e.target.files?.[0] ?? null;
+      setPhotoFile(f);
+
+      if (f) {
+        const url = URL.createObjectURL(f);
+        setPhotoPreview(url);
+      } else {
+        setPhotoPreview("");
+      }
+    }}
+  />
+
+  {photoPreview && (
+    <img
+      src={photoPreview}
+      alt="Preview"
+      className="h-40 w-full rounded-lg object-cover border"
+    />
+  )}
+</div>
 
           <div className="pt-1">
             <NameDropdown value={byName} onChange={setByName} onlyRole="fulltimer" />

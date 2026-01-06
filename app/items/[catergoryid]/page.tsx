@@ -20,6 +20,7 @@ type Item = {
   search_text: string | null;
   quota: number | null;
   quota_disabled: boolean;
+  photo_url: string | null; 
 };
 
 export default function ItemsPage() {
@@ -148,12 +149,10 @@ useEffect(() => {
 
     const res = await supabase
   .from('items')
-  .select('id,name,stock_count,search_text,quota,quota_disabled')
+  .select('id,name,stock_count,search_text,quota,quota_disabled,photo_url')
   .eq('subcategory_id', categoryId)
   .eq('is_active', true)
-  .limit(7000);
-
-
+  .limit(1000);
 
 
     if (cat.error) setErr(cat.error.message);
@@ -341,9 +340,18 @@ useEffect(() => {
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       {/* Left: name + tags */}
       <div className="min-w-0">
-        <div className="font-semibold tracking-tight">{it.name}</div>
-        <div className="text-xs text-gray-500 break-words">{it.search_text}</div>
-      </div>
+  {it.photo_url && (
+    <img
+      src={it.photo_url}
+      alt={it.name}
+      className="mb-2 h-40 w-full rounded-xl object-cover border"
+      loading="lazy"
+    />
+  )}
+
+  <div className="font-semibold tracking-tight">{it.name}</div>
+  <div className="text-xs text-gray-500 break-words">{it.search_text}</div>
+</div>
 
       {/* Right: stock + actions */}
       <div className="sm:text-right">
@@ -458,7 +466,7 @@ useEffect(() => {
 
     const res = await supabase
       .from("items")
-      .select('id,name,stock_count,search_text,quota,quota_disabled')
+      .select('id,name,stock_count,search_text,quota,quota_disabled,photo_url')
       .eq("subcategory_id", categoryId)
       .eq("is_active", true)
       .limit(200);
@@ -484,7 +492,7 @@ useEffect(() => {
 
   const res = await supabase
     .from("items")
-    .select('id,name,stock_count,search_text,quota,quota_disabled')
+    .select('id,name,stock_count,search_text,quota,quota_disabled,photo_url')
     .eq("subcategory_id", categoryId)
     .eq("is_active", true)
     .limit(200);
@@ -572,7 +580,7 @@ useEffect(() => {
 
           const res = await supabase
             .from("items")
-            .select('id,name,stock_count,search_text,quota,quota_disabled')
+            .select('id,name,stock_count,search_text,quota,quota_disabled,photo_url')
             .eq("subcategory_id", categoryId)
             .eq("is_active", true)
             .limit(200);
@@ -590,7 +598,7 @@ useEffect(() => {
 
     const res = await supabase
       .from("items")
-      .select('id,name,stock_count,search_text,quota,quota_disabled')
+      .select('id,name,stock_count,search_text,quota,quota_disabled,photo_url')
       .eq("subcategory_id", categoryId)
       .eq("is_active", true)
       .limit(200);

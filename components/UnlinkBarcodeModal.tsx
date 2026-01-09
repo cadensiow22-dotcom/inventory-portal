@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../lib/supabase";
 import NameDropdown from "./NameDropdown";
-import { verifyAdminPin } from "@/lib/adminPin";
 
 type Props = {
   open: boolean;
@@ -30,6 +29,9 @@ export default function UnlinkBarcodeModal({
     if (open) {
       setAdminPin("");
       setErrorMsg("");
+      // optional: reset name/date if you want
+      // setChangedByName("");
+      // setChangedByDate(new Date().toISOString().slice(0, 10));
     }
   }, [open]);
 
@@ -37,7 +39,7 @@ export default function UnlinkBarcodeModal({
     if (!barcodeText.trim()) return false;
     if (changedByName.trim().length < 2) return false;
     if (!changedByDate) return false;
-    if (!/^\d{6}$/.test(adminPin.trim())) return false; // ✅ admin pin
+    if (!/^\d{6}$/.test(adminPin.trim())) return false; // ✅ just format check
     return true;
   }, [barcodeText, changedByName, changedByDate, adminPin]);
 
@@ -51,24 +53,18 @@ export default function UnlinkBarcodeModal({
 
     setLoading(true);
 
-    // ✅ quick client-side check (server will still enforce)
-    const ok = await verifyAdminPin(adminPin.trim());
-    if (!ok) {
-      setErrorMsg("Invalid admin PIN.");
-      setLoading(false);
-      return;
-    }
-
     try {
+      // ✅ NO client-side admin pin verification anymore.
+      // ✅ Supabase RPC is the ONLY source of truth.
       const { error } = await supabase.rpc("unlink_barcode_from_item_with_pin", {
         p_barcode_text: barcodeText.trim(),
         p_changed_by_name: changedByName.trim(),
         p_changed_by_date: changedByDate,
-        p_pin: adminPin.trim(), // ✅ admin pin
+        p_pin: adminPin.trim(),
       });
 
       if (error) {
-        setErrorMsg(error.message);
+        setErrorMsg(error.message); // e.g. "Invalid admin PIN"
         return;
       }
 

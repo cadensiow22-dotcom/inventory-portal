@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { verifyAdminPin } from "@/lib/adminPin";
 
 type Subcat = { id: string; name: string };
 type ItemRow = {
@@ -133,14 +132,8 @@ export default function ManageQuotasModal({
 
     setLoading(true);
     try {
-      // ✅ client-side admin pin check (matches your other admin-only components)
-      const ok = await verifyAdminPin(p);
-      if (!ok) {
-        setErr("Invalid admin PIN.");
-        setLoading(false);
-        return;
-      }
-
+      // ✅ NO client-side verifyAdminPin anymore.
+      // ✅ Server route /api/quotas/bulk-update must verify pin using Supabase.
       const res = await fetch("/api/quotas/bulk-update", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -181,7 +174,6 @@ export default function ManageQuotasModal({
           </button>
         </div>
 
-        {/* 1) Select subcategory */}
         <div className="rounded-lg border p-3">
           <div className="text-sm font-semibold mb-1">1) Select subcategory</div>
           <select
@@ -198,7 +190,6 @@ export default function ManageQuotasModal({
           </select>
         </div>
 
-        {/* 2) Select items */}
         <div className="mt-3 rounded-lg border p-3">
           <div className="flex items-center justify-between gap-2">
             <div className="text-sm font-semibold">2) Select items</div>
@@ -260,7 +251,6 @@ export default function ManageQuotasModal({
           </div>
         </div>
 
-        {/* 3) Disable quota */}
         <div className="mt-3 rounded-lg border p-3">
           <div className="text-sm font-semibold mb-2">3) Disable quota (selected items)</div>
           <label className="flex items-center gap-2 text-sm">
@@ -273,7 +263,6 @@ export default function ManageQuotasModal({
           </label>
         </div>
 
-        {/* 4) Set new quota */}
         <div className="mt-3 rounded-lg border p-3">
           <div className="text-sm font-semibold mb-1">4) Set new quota</div>
           <input
@@ -289,7 +278,6 @@ export default function ManageQuotasModal({
           </p>
         </div>
 
-        {/* 5) Admin PIN */}
         <div className="mt-3 rounded-lg border p-3">
           <div className="text-sm font-semibold mb-1">5) Admin PIN (6 digits)</div>
           <input

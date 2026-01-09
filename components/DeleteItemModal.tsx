@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { supabase } from "../lib/supabase";
 import NameDropdown from "./NameDropdown";
-import { verifyAdminPin } from "@/lib/adminPin";
 
 export default function DeleteItemModal({
   open,
@@ -45,22 +44,17 @@ export default function DeleteItemModal({
 
     setLoading(true);
 
-    // ✅ client-side verify (fast fail). Server will still verify too.
-    const ok = await verifyAdminPin(adminPin.trim());
-    if (!ok) {
-      setErr("Invalid admin PIN.");
-      setLoading(false);
-      return;
-    }
-
+    // ✅ NO client-side pin verification anymore.
+    // ✅ Supabase RPC will be the ONLY source of truth.
     const { error } = await supabase.rpc("delete_item_with_pin", {
       p_item_id: item.id,
-      p_pin: adminPin.trim(), // ✅ admin pin passed in
+      p_pin: adminPin.trim(),
       p_changed_by_name: byName.trim(),
       p_changed_by_date: byDate,
     });
 
     if (error) {
+      // Supabase will return: "Invalid admin PIN" if wrong
       setErr(error.message);
       setLoading(false);
       return;
@@ -73,11 +67,9 @@ export default function DeleteItemModal({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 flex items-end sm:items-center justify-center p-0 sm:p-4">
-      {/* Backdrop click */}
       <button className="absolute inset-0" onClick={onClose} aria-label="Close modal" />
 
       <div className="relative w-full sm:max-w-lg bg-white rounded-t-2xl sm:rounded-2xl shadow-xl max-h-[92vh] flex flex-col overflow-hidden">
-        {/* Header (sticky) */}
         <div className="sticky top-0 bg-white border-b border-neutral-200 px-4 py-3">
           <h2 className="text-base sm:text-lg font-semibold text-red-600">Delete item</h2>
 
@@ -92,7 +84,6 @@ export default function DeleteItemModal({
           {err && <p className="mt-2 text-sm text-red-600">{err}</p>}
         </div>
 
-        {/* Body (scrolls) */}
         <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
           <div>
             <label className="block text-sm font-semibold">
@@ -134,7 +125,6 @@ export default function DeleteItemModal({
           </div>
         </div>
 
-        {/* Footer (sticky buttons always reachable) */}
         <div className="sticky bottom-0 bg-white border-t border-neutral-200 px-4 py-3">
           <div className="flex gap-2">
             <button

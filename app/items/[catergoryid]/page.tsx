@@ -33,7 +33,12 @@ export default function ItemsPage() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<{ id: string; name: string; stock_count: number } | null>(null);
+ const [selectedItem, setSelectedItem] = useState<{
+  id: string;
+  name: string;
+  stock_count: number;
+  photo_url: string | null;
+} | null>(null);
   const [adminMode, setAdminMode] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -48,7 +53,12 @@ export default function ItemsPage() {
   (s || "").replace(/\s+/g, "").trim();
   const [addPrefillBarcode, setAddPrefillBarcode] = useState("");
   const [publicUpdateOpen, setPublicUpdateOpen] = useState(false);
-  const [publicUpdateItem, setPublicUpdateItem] = useState<{ id: string; name: string; stock_count: number } | null>(null);
+  const [publicUpdateItem, setPublicUpdateItem] = useState<{
+  id: string;
+  name: string;
+  stock_count: number;
+  photo_url: string | null;
+} | null>(null);
   const [unlinkOpen, setUnlinkOpen] = useState(false);
 
   // --- Barcode/QR (additive) ---
@@ -94,10 +104,17 @@ useEffect(() => {
       return;
     }
 
-    const found =
-      row?.name && typeof row?.stock_count === "number"
-        ? { id: itemId, name: row.name, stock_count: row.stock_count }
-        : items.find((x) => x.id === itemId);
+    const listItem = items.find((x) => x.id === itemId) || null;
+
+const found =
+  row?.name && typeof row?.stock_count === "number"
+    ? {
+        id: itemId,
+        name: row.name,
+        stock_count: row.stock_count,
+        photo_url: listItem?.photo_url ?? null, // ✅ take from loaded list
+      }
+    : listItem;
 
     if (!found) {
       setBarcodeErr("Barcode is linked to an item outside this subcategory.");
@@ -377,6 +394,7 @@ useEffect(() => {
                 id: it.id,
                 name: it.name,
                 stock_count: it.stock_count,
+                photo_url: it.photo_url,
               });
               setModalOpen(true);
             }}
@@ -390,11 +408,13 @@ useEffect(() => {
     className="mt-2 w-full sm:w-auto rounded-xl border bg-neutral-50 px-4 py-2 text-sm hover:bg-neutral-100"
     onClick={() => {
       setPublicUpdateItem({
-        id: it.id,
-        name: it.name,
-        stock_count: it.stock_count,
-      });
-      setPublicUpdateOpen(true);
+  id: it.id,
+  name: it.name,
+  stock_count: it.stock_count,
+  photo_url: it.photo_url ?? null,
+});
+setPublicUpdateOpen(true);
+
     }}
   >
     Update

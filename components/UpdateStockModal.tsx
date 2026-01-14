@@ -8,6 +8,7 @@ type ItemRow = {
   id: string;
   name: string;
   stock_count: number;
+  photo_url?: string | null;
 };
 
 type Props = {
@@ -122,6 +123,15 @@ export default function UpdateStockModal({
         <p className="text-sm text-gray-600">
           {item.name} • Current: <span className="font-medium">{item.stock_count}</span>
         </p>
+
+        {item.photo_url ? (
+  <img
+    src={item.photo_url}
+    alt={item.name}
+    className="mt-3 h-40 w-full rounded-xl object-cover border"
+    loading="lazy"
+  />
+) : null}
 
         {errorMsg ? (
           <div className="mt-2 rounded-lg bg-red-50 p-3 text-sm text-red-700">

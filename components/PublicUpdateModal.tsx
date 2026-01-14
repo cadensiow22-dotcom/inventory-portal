@@ -8,6 +8,7 @@ type ItemRow = {
   id: string;
   name: string;
   stock_count: number;
+  photo_url?: string | null;
 };
 
 export default function PublicUpdateModal({
@@ -125,6 +126,15 @@ export default function PublicUpdateModal({
             Max subtract per update: <span className="font-semibold">{MAX_PUBLIC_DEDUCT}</span>
           </div>
         </div>
+
+        {item.photo_url ? (
+  <img
+    src={item.photo_url}
+    alt={item.name}
+    className="mt-3 h-40 w-full rounded-xl object-cover border"
+    loading="lazy"
+  />
+) : null}
 
         <div className="mt-3 space-y-3">
           <NameDropdown value={changedByName} onChange={setChangedByName} label="Your name" />

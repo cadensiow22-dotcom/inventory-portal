@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { sendPdfToAssignedEmail } from "@/lib/sendPdfToEmail";
 
 type Row = {
   item_id: string;
@@ -132,36 +133,61 @@ export default function ToOrderPage() {
           <button
   disabled={pdfLoading || rows.length === 0}
   onClick={async () => {
-    try {
-      setPdfLoading(true);
-      setErr(null);
-      setMsg(null);
+  try {
+    setPdfLoading(true);
+    setErr(null);
+    setMsg(null);
 
-      const res = await fetch("/api/to-order/pdf", { method: "GET" });
+    const res = await fetch("/api/to-order/pdf", { method: "GET" });
 
-      if (!res.ok) {
-        const j = await res.json().catch(() => null);
-        throw new Error(j?.error ?? "Failed to generate PDF");
-      }
+    if (!res.ok) {
+      const j = await res.json().catch(() => null);
+      throw new Error(j?.error ?? "Failed to generate PDF");
+    }
 
-      const blob = await res.blob();
+    const blob = await res.blob();
+    const filename = `to-order-${orderDate ?? "unknown"}.pdf`;
+
+    const choice = prompt(
+      "Type 1 to DOWNLOAD\nType 2 to SEND to assigned Gmail\n\nEnter 1 or 2:"
+    );
+
+    // 1️⃣ DOWNLOAD (same as before)
+    if (!choice || choice.trim() === "1") {
       const url = URL.createObjectURL(blob);
 
       const a = document.createElement("a");
       a.href = url;
-      a.download = `to-order-${orderDate ?? "unknown"}.pdf`;
+      a.download = filename;
       document.body.appendChild(a);
       a.click();
       a.remove();
 
       URL.revokeObjectURL(url);
       setMsg("PDF downloaded.");
-    } catch (e: any) {
-      setErr(e?.message ?? "Failed to download PDF");
-    } finally {
-      setPdfLoading(false);
+      return;
     }
-  }}
+
+    // 2️⃣ SEND TO GMAIL
+    if (choice.trim() === "2") {
+      await sendPdfToAssignedEmail({
+        blob,
+        filename,
+        subject: `To Order PDF - ${orderDate ?? "Unknown Date"}`,
+        message: "Attached is the To Order PDF from Inventory Portal.",
+      });
+
+      setMsg("PDF sent to assigned Gmail.");
+      return;
+    }
+
+    setMsg("Cancelled.");
+  } catch (e: any) {
+    setErr(e?.message ?? "Failed to generate PDF");
+  } finally {
+    setPdfLoading(false);
+  }
+}}
   className="rounded-lg bg-black px-4 py-2 text-white hover:bg-gray-800 disabled:opacity-50"
 >
   {pdfLoading ? "Converting..." : "Convert to PDF"}

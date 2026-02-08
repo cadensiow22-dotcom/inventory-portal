@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { sendPdfToAssignedEmail } from "@/lib/sendPdfToEmail";
 
 type Category = {
   id: string;
@@ -205,47 +206,70 @@ export default function StockTakePage() {
               🛒 To Order
             </button>
 
-            <button
-              className="rounded-lg bg-black px-4 py-2 text-white hover:bg-gray-800 disabled:opacity-50"
-              disabled={pdfLoading || !parentId}
-              onClick={async () => {
-                try {
-                  setPdfLoading(true);
-                  setErr(null);
-                  setMsg(null);
+           <button
+  className="rounded-lg bg-black px-4 py-2 text-white hover:bg-gray-800 disabled:opacity-50"
+  disabled={pdfLoading || !parentId}
+  onClick={async () => {
+    try {
+      if (!parentId) return;
 
-                  const res = await fetch(
-                    `/api/stock-take/pdf?categoryId=${encodeURIComponent(
-                      parentId
-                    )}`
-                  );
+      setPdfLoading(true);
+      setErr(null);
+      setMsg(null);
 
-                  if (!res.ok) {
-                    const j = await res.json().catch(() => null);
-                    throw new Error(
-                      j?.error ?? "Failed to generate PDF"
-                    );
-                  }
+      const res = await fetch(
+        `/api/stock-take/pdf?categoryId=${encodeURIComponent(parentId)}`
+      );
 
-                  const blob = await res.blob();
-                  const url = URL.createObjectURL(blob);
+      if (!res.ok) {
+        const j = await res.json().catch(() => null);
+        throw new Error(j?.error ?? "Failed to generate PDF");
+      }
 
-                  const a = document.createElement("a");
-                  a.href = url;
-                  a.download = `stocktake-${selectedParentName || "unknown"}.pdf`;
-                  document.body.appendChild(a);
-                  a.click();
-                  a.remove();
+      const blob = await res.blob();
+      const filename = `stocktake-${selectedParentName || "unknown"}.pdf`;
 
-                  URL.revokeObjectURL(url);
-                  setMsg("PDF downloaded.");
-                } catch (e: any) {
-                  setErr(e?.message ?? "Failed to download PDF");
-                } finally {
-                  setPdfLoading(false);
-                }
-              }}
-            >
+      const choice = prompt(
+        "Type 1 to DOWNLOAD\nType 2 to SEND to assigned Gmail\n\nEnter 1 or 2:"
+      );
+
+      // OPTION 1 — DOWNLOAD (same behavior as before)
+      if (!choice || choice.trim() === "1") {
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+
+        URL.revokeObjectURL(url);
+        setMsg("PDF downloaded.");
+        return;
+      }
+
+      // OPTION 2 — SEND TO GMAIL
+      if (choice.trim() === "2") {
+        await sendPdfToAssignedEmail({
+          blob,
+          filename,
+          subject: `Stock Take PDF - ${selectedParentName || "All"}`,
+          message: "Attached is the Stock Take PDF from Inventory Portal.",
+        });
+
+        setMsg("PDF sent to assigned Gmail.");
+        return;
+      }
+
+      setMsg("Cancelled.");
+    } catch (e: any) {
+      setErr(e?.message ?? "Failed to generate PDF");
+    } finally {
+      setPdfLoading(false);
+    }
+  }}
+>
               {pdfLoading ? "Converting..." : "Convert to PDF"}
             </button>
           </div>

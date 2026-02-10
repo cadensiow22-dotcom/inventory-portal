@@ -60,7 +60,8 @@ export default function AddItemModal({
   if (!open) return null;
 
   const trimmedBarcode = (barcodeText || "").trim();
-  const isBarcodeFlow = openedWithPrefill.current && trimmedBarcode.length > 0;
+ const isBarcodeFlow = trimmedBarcode.length > 0;
+
 
   async function submit() {
     setError("");

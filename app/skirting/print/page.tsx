@@ -196,7 +196,7 @@ export default function SkirtingPrintPage() {
   <tbody>
     <tr>
       <td className="label bold">Filled by</td>
-      <td className="bold">CM Fulltimer</td>
+      <td className="bold">CM Full Time Staff</td>
     </tr>
 
     <tr>

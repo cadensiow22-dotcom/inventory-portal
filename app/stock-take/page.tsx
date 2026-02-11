@@ -230,7 +230,7 @@ export default function StockTakePage() {
       const filename = `stocktake-${selectedParentName || "unknown"}.pdf`;
 
       const choice = prompt(
-        "Type 1 to DOWNLOAD\nType 2 to SEND to assigned Gmail\n\nEnter 1 or 2:"
+        "Type 1 to DOWNLOAD\nType 2 to SEND to assigned Email\n\nEnter 1 or 2:"
       );
 
       // OPTION 1 — DOWNLOAD (same behavior as before)
@@ -258,7 +258,7 @@ export default function StockTakePage() {
           message: "Attached is the Stock Take PDF from Inventory Portal.",
         });
 
-        setMsg("PDF sent to assigned Gmail.");
+        setMsg("PDF sent to assigned Email.");
         return;
       }
 

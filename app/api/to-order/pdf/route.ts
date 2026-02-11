@@ -20,6 +20,12 @@ function makeSafeFilenamePart(s: string) {
   return s.replace(/[^a-zA-Z0-9_-]+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
 }
 
+function qtyNeeded(stock: number, quota: number) {
+  const s = Number(stock ?? 0);
+  const q = Number(quota ?? 0);
+  return Math.max(q - s, 0);
+}
+
 async function buildPdfBuffer(rows: Row[]) {
   return await new Promise<Buffer>((resolve, reject) => {
     const doc = new PDFDocument({
@@ -93,7 +99,6 @@ async function buildPdfBuffer(rows: Row[]) {
         doc.fontSize(12).text(sub.name);
         doc.moveDown(0.2);
 
-        // sort items by name
         const itemsSorted = [...sub.items].sort((a, b) => (a.item_name ?? "").localeCompare(b.item_name ?? ""));
 
         for (const item of itemsSorted) {
@@ -103,6 +108,57 @@ async function buildPdfBuffer(rows: Row[]) {
 
         doc.moveDown(0.6);
       }
+    }
+
+    // ----- ORDER SUMMARY (Grouped by Parent Category) -----
+    // Unique by item_id (avoid repeats)
+    const unique = new Map<string, Row>();
+    for (const r of rows) unique.set(r.item_id, r);
+
+    // Group summary by parent category name
+    const summaryByParent = new Map<string, { name: string; items: { name: string; needed: number }[] }>();
+
+    for (const r of unique.values()) {
+      const needed = qtyNeeded(r.stock_count, r.quota);
+      if (needed <= 0) continue;
+
+      const parentName = (r.parent_category_name ?? "Unknown Category").trim() || "Unknown Category";
+      const itemName = (r.item_name ?? "").trim();
+      if (!itemName) continue;
+
+      if (!summaryByParent.has(parentName)) {
+        summaryByParent.set(parentName, { name: parentName, items: [] });
+      }
+      summaryByParent.get(parentName)!.items.push({ name: itemName, needed });
+    }
+
+    const summaryParentsSorted = Array.from(summaryByParent.values()).sort((a, b) => a.name.localeCompare(b.name));
+
+    if (summaryParentsSorted.length > 0) {
+      const bottomSpace = doc.page.height - doc.page.margins.bottom - doc.y;
+      if (bottomSpace < 220) doc.addPage();
+
+      doc.moveDown(0.8);
+      doc.fontSize(14).text("ORDER SUMMARY (Qty Needed)", { underline: true });
+      doc.moveDown(0.4);
+
+      for (const parent of summaryParentsSorted) {
+        // sort items by name within parent
+        parent.items.sort((a, b) => a.name.localeCompare(b.name));
+
+        doc.fontSize(12).fillColor("black").text(parent.name.toUpperCase());
+        doc.moveDown(0.2);
+
+        for (const it of parent.items) {
+          doc.fontSize(10).fillColor("black").text(`• ${it.name} - `, { indent: 12, continued: true });
+          doc.fillColor("blue").text(String(it.needed));
+        }
+
+        doc.fillColor("black");
+        doc.moveDown(0.6);
+      }
+
+      doc.fillColor("black");
     }
 
     doc.end();
@@ -140,15 +196,14 @@ export async function GET() {
 
     const body = new Uint8Array(pdfBuffer);
 
-return new NextResponse(body, {
-  status: 200,
-  headers: {
-    "Content-Type": "application/pdf",
-    "Content-Disposition": `attachment; filename="${filename}"`,
-  },
-});
-
-      } catch (e: any) {
+    return new NextResponse(body, {
+      status: 200,
+      headers: {
+        "Content-Type": "application/pdf",
+        "Content-Disposition": `attachment; filename="${filename}"`,
+      },
+    });
+  } catch (e: any) {
     return NextResponse.json({ error: e?.message ?? "Unknown error" }, { status: 500 });
   }
 }
